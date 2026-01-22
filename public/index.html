@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Route Hub</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Raleway:wght@400;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<header class="navbar">
+  <div class="container nav-inner">
+    <div class="logo">
+      <a href="index.html">
+        <img src="https://i.ibb.co/GvcSrYbs/1-edited-free-carve-photos-1.png" alt="RouteHub">
+      </a>
+    </div>
+
+    <nav class="menu">
+      <a href="about(test)/about.html">О нас</a>
+      <a href="newspage/index.html">Новости</a>
+      <a href="mape/map.html">Карта грузов</a>
+      <a href="stats(test)/statss.html">Статистика</a>
+    </nav>
+
+    <div id="auth-container">
+    <a href="login.html">
+      <button class="signup">Авторизация</button>
+    </a>
+    </div>
+
+    <div class="burger" id="burger">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="about(test)/about.html">О нас</a>
+      <a href="newspage/index.html">Новости</a>
+      <a href="mape/map.html">Карта грузов</a>
+      <a href="stats(test)/statss.html">Статистика</a>
+      
+      <div id="auth-container-mobile">
+      <a href="login.html" class="signup-mobile">
+         <button class="signup">Авторизация</button>
+      </a>
+      </div>
+
+    </div>
+
+  </div>
+</header>
+
+
+  <hr class="divider">
+
+  <main>
+    <section class="hero">
+      <div class="hero-overlay"></div>
+
+      <div class="container hero-inner">
+        <h1>Крупнейшая международная<br>Биржа грузоперевозок</h1>
+        <p class="subtitle">Помогаем перевозчикам и грузоотправителям найти друг друга и договориться о перевозке</p>
+        <div class="buttons">
+          <a class="btn primary" href="Page4/index.html">Для грузовладельцев</a>
+           <a class="btn primary" href="page2(MobAdapTrue)/index2.html">Для перевозчиков</a>
+          
+        </div>
+      </div>
+
+    </section>
+
+    <section class="stats container">
+      <div class="card">
+        <div class="card-icon">📦</div>
+        <h3>200 000 грузов</h3>
+        <p>ежедневно ждут откликов от перевозчиков</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🚚</div>
+        <h3>100 000 машин</h3>
+        <p>ежедневно готовы к перевозке</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">👥</div>
+        <h3>300 000 участников</h3>
+        <p>ежедневно работают на платформе</p>
+      </div>
+    </section>
+
+    <section class="features container">
+      <h2 class="features-title">Находите партнёров на RH</h2>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <h3>Безопасно</h3>
+          <ul>
+            <li>Паспорт участника RH отражает его репутацию.</li>
+            <li>Рейтинг RH помогает найти лучших участников.</li>
+            <li>GPS-мониторинг грузов в реальном времени.</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <h3>Удобно</h3>
+          <ul>
+            <li>Мобильные приложения для Android и iOS.</li>
+            <li>Электронные документы и обмен ими.</li>
+            <li>Один раз вводите данные — и всё.</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <h3>Бесплатно</h3>
+          <ul>
+            <li>Регистрация.</li>
+            <li>Добавление грузов и транспорта.</li>
+            <li>Поиск грузов и транспорта.</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <h3>Просто</h3>
+          <ul>
+            <li>Представитель в Казахстане поможет начать.</li>
+            <li>Понятные инструкции и форум.</li>
+            <li>Поддержка 24/7.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    </div>
+
+  </main>
+
+<footer class="site-footer">
+  <div class="container">
+    
+    <div class="footer-left">
+      © 2025 Route Hub — все права защищены
+    </div>
+
+    <div class="footer-nav">
+      <a href="about(test)/about.html">О нас</a>
+      <a href="newspage/index.html"a>Новости</a>
+      <a href="mape/map.html">Карта</a>
+      <a href="stats(test)/statss.html">Статистика</a>
+    </div>
+
+  </div>
+</footer>
+
+  <script src="script.js"></script>
+
+
+<script>
+  // Функция для обновления шапки, если пользователь залогинен
+  async function updateNavbar() {
+    try {
+      const response = await fetch('/api/me'); // Спрашиваем у сервера данные профиля
+      
+      if (response.ok) {
+        const user = await response.json();
+        
+        // Код, который мы вставим вместо кнопок "Авторизация"
+    const userHtml = `
+  <div style="display: flex; align-items: center; gap: 15px;">
+    <span style="color: var(--text-primary); font-weight: 600; font-size: 14px; letter-spacing: 0.5px;">
+    <a href="profile.html">  ${user.name} </a>
+    </span>
+    <button onclick="logoutUser()" class="logout-btn">
+      Выйти
+    </button>
+  </div>
+`;
+
+        // Заменяем кнопки на имя и кнопку выхода в обоих местах
+        document.getElementById('auth-container').innerHTML = userHtml;
+        document.getElementById('auth-container-mobile').innerHTML = userHtml;
+      }
+    } catch (err) {
+      console.log('Пользователь не авторизован');
+    }
+  }
+
+  // Функция для выхода
+  async function logoutUser() {
+    await fetch('/api/logout', { method: 'POST' });
+    window.location.reload(); // Перезагружаем страницу, чтобы кнопки вернулись в исходный вид
+  }
+
+  // Запускаем проверку при загрузке страницы
+  document.addEventListener('DOMContentLoaded', updateNavbar);
+</script>
+
+
+</body>
+  
+</html>

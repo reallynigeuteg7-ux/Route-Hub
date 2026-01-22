@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Авторизация — Route Hub</title>
+  <link rel="stylesheet" href="log.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+
+<header class="navbar">
+  <div class="container nav-inner">
+  
+ 
+  </div>
+</header>
+
+<main class="login-page">
+  <div class="login-card" id="card">
+
+     <a href="index.html">
+    <img class="log2" src="https://i.ibb.co/GvcSrYbs/1-edited-free-carve-photos-1.png" alt="logo">
+       </a>
+       
+    <h2 id="card-title">Вход в аккаунт</h2>
+    <p class="subtitle">Добро пожаловать на Route Hub</p>
+
+    <!-- Вставим скрытое поле csrf через JS -->
+
+    <form id="login-form" class="login-form">
+      <input id="login-email" type="email" placeholder="Email" required>
+      <input id="login-password" type="password" placeholder="Пароль" required>
+      <input type="hidden" id="csrf" name="csrf">
+      <button type="submit" class="btn-submit">Войти</button>
+    
+    </form>
+
+    <form id="register-form" class="login-form" style="display:none;">
+      <input id="reg-name" type="text" placeholder="Имя (необязательно)">
+      <input id="reg-email" type="email" placeholder="Email" required>
+      <input id="reg-password" type="password" placeholder="Пароль (минимум 6 символов)" required>
+      <button type="submit" class="btn-submit">Зарегистрироваться</button>
+    </form>
+
+    <div class="links">
+      <a href="#" id="toggle-register">Нет аккаунта? Регистрация</a>
+      <a href="#" id="forgot">Забыли пароль?</a>
+    </div>
+
+    <div id="msg" style="margin-top:12px;color:#ffb3b3;"></div>
+  </div>
+</main>
+
+<footer class="footer">© 2025 Route Hub — все права защищены</footer>
+
+<script>
+
+// получить csrf токен
+
+
+const loginForm = document.getElementById('login-form');
+const registerForm = document.getElementById('register-form');
+const toggle = document.getElementById('toggle-register');
+const msg = document.getElementById('msg');
+
+toggle.addEventListener('click', e => {
+  e.preventDefault();
+  if (loginForm.style.display === 'none') {
+    loginForm.style.display = '';
+    registerForm.style.display = 'none';
+    document.getElementById('card-title').textContent = 'Вход в аккаунт';
+    toggle.textContent = 'Нет аккаунта? Регистрация';
+  } else {
+    loginForm.style.display = 'none';
+    registerForm.style.display = '';
+    document.getElementById('card-title').textContent = 'Регистрация';
+    toggle.textContent = 'Уже есть аккаунт? Войти';
+  }
+  msg.textContent = '';
+});
+
+// Логин
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  msg.textContent = '';
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+
+  const json = await res.json();
+  if (res.ok) {
+    window.location.href = '/profile.html';
+  } else {
+    msg.textContent = json.error || 'Ошибка';
+  }
+});
+
+// Регистрация
+registerForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  msg.textContent = '';
+  const name = document.getElementById('reg-name').value;
+  const email = document.getElementById('reg-email').value;
+  const password = document.getElementById('reg-password').value;
+
+  const res = await fetch('/api/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, password })
+  });
+
+  const json = await res.json();
+  if (res.ok) {
+    window.location.href = '/profile.html';
+  } else {
+    msg.textContent = json.error || 'Ошибка';
+  }
+});
+
+</script>
+</body>
+</html>

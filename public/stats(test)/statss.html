@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Центр Управления — Route Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css"> <link rel="stylesheet" href="style.css">    </head>
+<body class="stats-page">
+    <header class="navbar">
+        <div class="container nav-inner">
+            <div class="logo">
+                <a href="../index.html"><img src="https://i.ibb.co.com/GvcSrYbs/1-edited-free-carve-photos-1.png" alt="logo"></a>
+            </div>
+            <nav class="menu">
+                <a href="../about(test)/about.html">О нас</a>
+                <a href="../newspage/index.html">Новости</a>
+                <a href="../mape/map.html">Карта</a>
+                <a href="statss.html" class="active">Статистика</a>
+            </nav>
+            <div class="burger" id="burger"><span></span><span></span><span></span></div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="stats-hero">
+            <div class="live-indicator"><span class="dot"></span> LIVE SYSTEM STATUS</div>
+            <h1>Command Center</h1>
+            <p>Мониторинг логистической экосистемы в реальном времени</p>
+        </section>
+
+        <div class="system-status-grid">
+            <div class="status-item"><span>СЕРВЕР</span><span class="status-value online">ONLINE</span></div>
+            <div class="status-item"><span>БАЗА ДАННЫХ</span><span class="status-value online">CONNECTED</span></div>
+            <div class="status-item"><span>NETWORK LOAD</span><span class="status-value" id="load-val">0.0%</span></div>
+        </div>
+
+        <div class="main-dashboard-grid">
+            <div class="dashboard-left">
+                <div class="big-card">
+                    <div class="big-numbers">
+                        <div class="num-group">
+                            <span class="label">ВСЕГО ГРУЗОВ</span>
+                            <h2 id="total-loads">0</h2>
+                        </div>
+                        <div class="num-group">
+                            <span class="label">ПОЛЬЗОВАТЕЛИ</span>
+                            <h2 id="total-users">0</h2>
+                        </div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-labels"><span>Цель месяца (1000)</span><span id="prog-perc">0%</span></div>
+                        <div class="progress-bar"><div class="fill" id="goal-progress"></div></div>
+                    </div>
+                </div>
+
+                <div class="radar-card">
+                    <div class="radar-container">
+                        <div class="radar-scan"></div>
+                        <div class="radar-dot" style="top:30%; left:40%"></div>
+                        <div class="radar-dot" style="top:70%; left:20%"></div>
+                    </div>
+                    <div class="radar-info">
+                        <h3>СКАНЕР СЕТИ</h3>
+                        <p id="scanning-city">Инициализация...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-right">
+                <div class="feed-card">
+                    <h3>ЛОГ СОБЫТИЙ</h3>
+                    <div class="event-feed" id="event-feed"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>

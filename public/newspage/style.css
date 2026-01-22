@@ -1,0 +1,182 @@
+/* Использование переменных из основного style.css */
+.news-page {
+    padding-top: 140px; /* Чтобы заголовок не ушел под навигацию */
+    min-height: 100vh;
+}
+
+.page-title {
+    font-size: 42px;
+    margin-bottom: 50px;
+    text-align: center;
+    color: #fff;
+}
+
+/* Сетка новостей */
+.news-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin-bottom: 80px;
+}
+
+/* Карточки */
+.news-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.news-card:hover {
+    transform: translateY(-10px);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: #2b8cff;
+    /* ФИРМЕННОЕ СИНЕЕ СВЕЧЕНИЕ КАРТОЧКИ */
+    box-shadow: 0 10px 30px rgba(43, 140, 255, 0.3);
+}
+
+.news-image {
+    height: 200px;
+    background-size: cover;
+    background-position: center;
+}
+
+.news-content {
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.news-date {
+    font-size: 13px;
+    color: #2b8cff;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.news-content h3 {
+    font-size: 20px;
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+.news-content p {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
+
+/* Кнопка "Читать далее" с синим свечением */
+.btn-read {
+    margin-top: auto;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    display: inline-block;
+    padding: 10px 0;
+    transition: 0.3s;
+}
+
+.btn-read:hover {
+    color: #2b8cff;
+    text-shadow: 0 0 10px rgba(43, 140, 255, 0.6);
+}
+
+/* Растягиваем четвертую карточку на всю ширину сетки */
+.wide-card {
+  grid-column: 1 / -1; /* Занимает все колонки от первой до последней */
+  display: flex !important; 
+  flex-direction: row !important; /* Делаем контент в ряд */
+  min-height: 380px;
+}
+
+.wide-card .card-image {
+  width: 45%; /* Картинка слева */
+  height: auto;
+}
+
+.wide-card .card-body {
+  width: 55%; /* Текст справа */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px;
+}
+
+/* Оформление элементов внутри широкой карточки */
+.card-meta {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.badge {
+  background: rgba(43, 140, 255, 0.2);
+  color: #2b8cff;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.wide-card h3 {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+.card-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.read-more{
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  color: #fff;
+}
+.read-more:hover{
+    color: #2b8cff;
+    text-shadow: 0 0 10px rgba(43, 140, 255, 0.6);
+}
+
+
+/* Адаптив: на мобилках широкая карточка снова станет обычной вертикальной */
+@media (max-width: 900px) {
+  .wide-card {
+    flex-direction: column !important;
+  }
+  .wide-card .card-image, 
+  .wide-card .card-body {
+    width: 100%;
+  }
+}
+
+
+
+
+/* Адаптивность */
+@media (max-width: 1024px) {
+    .news-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .news-grid { grid-template-columns: 1fr; }
+    .page-title { font-size: 32px; }
+    .news-page { padding-top: 100px; }
+}
+
+@media(max-width: 900px){
+  .page-title{
+    padding-top: 40px;
+  }
+}

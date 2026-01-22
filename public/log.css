@@ -1,0 +1,299 @@
+/* ================= ROOT / COLORS ================= */
+:root {
+  --bg: #0f1720;
+  --bg-alt: #001a33;
+  --accent: #2b8cff;
+  --neon: #00d5ff;
+  --muted: #c9d6df;
+}
+
+/* ================= GLOBAL ================= */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  font-family: "Montserrat", sans-serif;
+  color: white;
+  background: linear-gradient(120deg, #000d1a, #1b2630, #051425);
+  background-size: 240% 240%;
+  animation: gradientMove 8s infinite alternate ease-in-out;
+}
+
+/* ================= BACKGROUND ANIMATION ================= */
+@keyframes gradientMove {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 100% 100%; }
+}
+
+/* ================= HEADER ================= */
+.navbar {
+  width: 100%;
+  background: transparent;
+  padding: 18px 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 50;
+}
+
+.nav-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: min(1200px, 94%);
+  margin: 0 auto;
+}
+
+.logo img {
+  width: 120px;
+  height: auto;
+}
+
+.menu {
+  display: flex;
+  gap: 32px;
+}
+
+.menu a {
+  color: #d5d5d5;
+  text-decoration: none;
+  font-size: 15px;
+  transition: 0.3s;
+}
+
+.menu a:hover {
+  color: var(--neon);
+  text-shadow: 0 0 6px var(--neon);
+}
+
+.signup {
+  background: white;
+  color: #000;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-weight: 600;
+  transition: 0.3s;
+  border: 0;
+  cursor: pointer;
+}
+
+.signup:hover {
+  background: #e6e6e6;
+}
+
+/* ================= LOGIN PAGE ================= */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+/* Слой blur как у главной */
+.login-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 15, 20, 0.4);
+  backdrop-filter: blur(18px);
+  z-index: 1;
+}
+
+/* Карточка логина с точь-в-точь стилем blur и прозрачностью */
+.login-card {
+  position: relative;
+  z-index: 2;
+  max-width: 420px;
+  width: 90%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 255, 0.15);
+  backdrop-filter: blur(18px);
+  padding: 40px 34px;
+  border-radius: 16px;
+  box-shadow: 0 0 25px rgba(0, 255, 255, 0.15);
+  text-align: center;
+}
+
+.login-card h2 {
+  font-size: 26px;
+  margin-bottom: 6px;
+}
+
+.login-card .subtitle {
+  color: #90b5c3;
+  margin-bottom: 26px;
+  font-size: 14px;
+}
+
+.login-form input {
+  width: 91%;
+  padding: 14px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.07);
+  color: white;
+  font-size: 15px;
+  outline: none;
+  transition: 0.3s;
+}
+
+.login-form input:focus {
+  border-color: var(--neon);
+  box-shadow: 0 0 8px var(--neon);
+}
+
+.btn-submit {
+  width: 92%;
+  padding: 14px 0;
+   background: linear-gradient(
+    90deg,
+    rgba(0, 240, 255, 0.06),
+    rgba(31, 162, 255, 0.08)
+  );
+  color: #ffffff;
+  border-radius: 10px;
+  border: none;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-submit:hover {
+  box-shadow: 0 0 20px var(--neon);
+  transform: translateY(-3px);
+  color: black;
+  background: #2b8cff;;
+}
+
+/* ================= LINKS ================= */
+.links {
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.links a {
+  color: var(--neon);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+/* ================= FOOTER ================= */
+.footer {
+  text-align: center;
+  padding: 20px;
+  color: rgba(255, 255, 255, 0.6);
+  width: 100%;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  .login-card {
+    padding: 30px 20px;
+  }
+
+  .login-form input {
+    width: 100%;
+  }
+
+  .btn-submit {
+    width: 100%;
+  }
+}
+
+/* ================= MOBILE MENU ================= */
+.burger,
+.mobile-menu {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .menu,
+  .signup {
+    display: none;
+  }
+
+  .burger {
+    display: block;
+    width: 30px;
+    height: 22px;
+    cursor: pointer;
+    position: relative;
+    z-index: 60;
+  }
+
+  .burger span {
+    display: block;
+    height: 4px;
+    background: #fff;
+    margin: 4px 0;
+    border-radius: 2px;
+    transition: 0.3s;
+  }
+
+  .mobile-menu {
+    display: none; /* открывается через JS */
+    position: absolute;
+    top: 100%;
+    right: 16px;
+    background: #0b0f14;
+    width: 200px;
+    flex-direction: column;
+    padding: 16px;
+    gap: 12px;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+    z-index: 55;
+  }
+
+  .mobile-menu a,
+  .mobile-menu .signup {
+    display: block;
+    color: #fff;
+    text-decoration: none;
+    padding: 8px 0;
+  }
+
+  .mobile-menu .signup {
+    background: #fff;
+    color: #000;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px 0;
+  }
+
+  .mobile-menu a:hover,
+  .mobile-menu .signup:hover {
+    background: var(--neon);
+    color: #000;
+  }
+
+  .mobile-menu {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.burger.open span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+.burger.open span:nth-child(2) {
+  opacity: 0;
+}
+.burger.open span:nth-child(3) {
+  transform: rotate(-45deg) translate(6px, -6px);
+}
+
+.log2{
+  width: 120px;
+  height: auto;
+  padding-bottom: 15px;
+}

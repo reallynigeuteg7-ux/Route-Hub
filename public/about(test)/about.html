@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>О нас — QAZAQSTAN LOGISTICA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <header class="navbar">
+    <div class="container nav-inner">
+      <div class="logo">
+        <a href="../index.html">
+          <img src="https://i.ibb.co/GvcSrYbs/1-edited-free-carve-photos-1.png" alt="logo">
+        </a>
+      </div>
+
+      <nav class="menu">
+        <a href="../about(test)/about.html">О нас</a>
+        <a href="../newspage/index.html">Новости</a>
+        <a href="../mape/map.html">Карта грузов</a>
+        <a href="../stats(test)/statss.html">Статистика</a>
+      </nav>
+<div id="auth-container">
+      <a href="../login.html">
+        <button class="signup">Авторизация</button>
+      </a>
+      </div>
+
+      <div class="burger" id="burger">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      <div class="mobile-menu" id="mobileMenu">
+        <a href="../about(test)/about.html">О нас</a>
+        <a href="../newspage/index.html">Новости</a>
+        <a href="../mape/map.html">Карта грузов</a>
+        <a href="../stats(test)/statss.html">Статистика</a>
+
+        <div id="auth-container-mobile">
+        <a href="../login.html" class="signup-mobile">
+          <button class="signup">Авторизация</button>
+        </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+
+  <section class="page-hero container">
+    <h1>О нашей компании</h1>
+    <p>Мы предоставляем качественные услуги в сфере логистики по всему Казахстану.</p>
+  </section>
+
+  <div class="container">
+    <div class="section">
+      <h2>Наша миссия</h2>
+      <p>Обеспечивать надежные и быстрые перевозки, внедряя современные технологии для эффективной доставки грузов нашим клиентам.</p>
+    </div>
+
+    <div class="section">
+      <h2>Наши ценности</h2>
+      <ul style="margin-top:20px; padding-left:20px; line-height:1.6;">
+        <li>Надежность и прозрачность</li>
+        <li>Инновации и технологии</li>
+        <li>Клиентоориентированность</li>
+        <li>Ответственность за груз</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>Наша команда</h2>
+      <div class="team-grid">
+
+        <div class="team-card">
+          <h3>Утегенов Адильжан Галымжанович</h3>
+          <p>Frontend, UI/UX (Руководитель IT-отдела)</p>
+        </div>
+
+        <div class="team-card">
+          <h3>Оразхожаева Бибіфатима </h3>
+          <p>Руководитель отдела медиа и SMM</p>
+        </div>
+
+        <div class="team-card">
+          <h3>Ерик Расул Ержанович</h3>
+          <p>CEO</p>
+        </div>
+
+        <div class="team-card">
+          <h3>Мухамбеткалиев Али</h3>
+          <p>Руководитель отдела медиа и SMM</p>
+        </div>
+
+        <div class="team-card">
+          <h3>Туралив Баглан</h3>
+          <p>Генеральный Директор компаний</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <footer class="site-footer">
+    <div class="container">
+
+      <div class="footer-left">
+        © 2025 ROUTE HUB — все права защищены
+      </div>
+
+      <div class="footer-nav">
+        <a href="../about(test)/about.html">О нас</a>
+        <a href="../newspage/index.html">Новости</a>
+        <a href="../mape/map.html">Карта грузов</a>
+        <a href="../stats(test)/statss.html">Статистика</a>
+      </div>
+
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+
+  <script>
+  // Функция для обновления шапки, если пользователь залогинен
+  async function updateNavbar() {
+    try {
+      const response = await fetch('/api/me'); // Спрашиваем у сервера данные профиля
+      
+      if (response.ok) {
+        const user = await response.json();
+        
+        // Код, который мы вставим вместо кнопок "Авторизация"
+    const userHtml = `
+  <div style="display: flex; align-items: center; gap: 15px;">
+    <span style="color: var(--text-primary); font-weight: 600; font-size: 14px; letter-spacing: 0.5px;">
+      ${user.name}
+    </span>
+    <button onclick="logoutUser()" class="logout-btn">
+      Выйти
+    </button>
+  </div>
+`;
+
+        // Заменяем кнопки на имя и кнопку выхода в обоих местах
+        document.getElementById('auth-container').innerHTML = userHtml;
+        document.getElementById('auth-container-mobile').innerHTML = userHtml;
+      }
+    } catch (err) {
+      console.log('Пользователь не авторизован');
+    }
+  }
+
+  // Функция для выхода
+  async function logoutUser() {
+    await fetch('/api/logout', { method: 'POST' });
+    window.location.reload(); // Перезагружаем страницу, чтобы кнопки вернулись в исходный вид
+  }
+
+  // Запускаем проверку при загрузке страницы
+  document.addEventListener('DOMContentLoaded', updateNavbar);
+</script>
+
+</body>
+
+</html>

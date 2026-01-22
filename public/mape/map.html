@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Карта грузов — ROUTE HUB</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="container nav-inner">
+      <div class="logo">
+        <a href="../index.html">
+          <img src="https://i.ibb.co.com/GvcSrYbs/1-edited-free-carve-photos-1.png" alt="logo">
+        </a>
+      </div>  
+      
+      <nav class="menu">
+        <a href="../about(test)/about.html">О нас</a>
+        <a href="../newspage/index.html">Новости</a>
+        <a href="../mape/map.html">Карта грузов</a>
+        <a href="../stats(test)/statss.html">Статистика</a>
+      </nav>
+
+      <div id="auth-container">
+        <a href="../login.html"><button class="signup">Авторизация</button></a>
+      </div>
+
+      <div class="burger" id="burger">
+        <span></span><span></span><span></span>
+      </div>
+
+      <div class="mobile-menu" id="mobileMenu">
+        <a href="../about(test)/about.html">О нас</a>
+        <a href="../newspage/index.html">Новости</a>
+        <a href="../mape/map.html">Карта грузов</a>
+        <a href="../stats(test)/statss.html">Статистика</a>
+        <div id="auth-container-mobile">
+          <a href="../login.html"><button class="signup">Авторизация</button></a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="page-hero container">
+    <h1>Карта грузов</h1>
+    <p>Просматривайте расположение грузов в реальном времени</p>
+
+    <div class="map-filters">
+        <input type="text" id="citySearch" placeholder="Поиск города (напр. Астана)">
+        <select id="filterType">
+            <option value="">Все типы кузова</option>
+            <option value="Тент">Тент</option>
+            <option value="Рефрижератор">Рефрижератор</option>
+            <option value="Бортовой">Бортовой</option>
+        </select>
+        <input type="number" id="filterWeight" placeholder="Мин. вес (т)">
+        <button id="applyMapFilters" class="logout-btn">Применить</button>
+    </div>
+  </section>
+  
+  <div class="container">
+    <div id="map"></div> 
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-left">© 2025 ROUTE HUB — все права защищены</div>
+      <div class="footer-nav">
+        <a href="../about(test)/about.html">О нас</a>
+        <a href="../newspage/index.html">Новости</a>
+        <a href="../mape/map.html">Карта грузов</a>
+        <a href="../stats(test)/statss.html">Статистика</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

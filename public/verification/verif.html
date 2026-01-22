@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Верификация профиля — Route Hub</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="verify-page">
+
+  <div class="verify-container">
+    <div class="verify-card">
+      <div class="verify-header">
+        <div class="step-indicator">Шаг 2 из 3</div>
+        <h1>Подтверждение личности</h1>
+        <p>Загрузите документы, чтобы получить доступ к прямым контактам заказчиков.</p>
+      </div>
+
+      <form id="verifyForm" class="verify-form">
+        <div class="upload-section">
+          <div class="section-title">
+            <span class="icon">📄</span>
+            <div>
+              <h3>Техпаспорт (СРТС)</h3>
+              <p>Лицевая и обратная сторона</p>
+            </div>
+          </div>
+          <div class="upload-grid">
+            <label class="upload-box">
+              <input type="file" accept="image/*" hidden>
+              <div class="plus">+</div>
+              <span>Лицевая сторона</span>
+            </label>
+            <label class="upload-box">
+              <input type="file" accept="image/*" hidden>
+              <div class="plus">+</div>
+              <span>Обратная сторона</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="upload-section">
+          <div class="section-title">
+            <span class="icon">🪪</span>
+            <div>
+              <h3>Водительское удостоверение</h3>
+              <p>Срок действия должен быть актуален</p>
+            </div>
+          </div>
+          <label class="upload-box wide">
+            <input type="file" accept="image/*" hidden>
+            <div class="plus">+</div>
+            <span>Загрузить фото прав</span>
+          </label>
+        </div>
+
+        <div class="verify-footer">
+          <p class="security-note">🔒 Ваши данные зашифрованы и доступны только службе безопасности</p>
+          <button type="submit" class="btn-verify">Отправить на проверку</button>
+          <a href="../profile.html" class="skip-link">Пропустить и заполнить позже</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</body>
+
+</html>

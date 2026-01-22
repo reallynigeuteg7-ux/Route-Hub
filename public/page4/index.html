@@ -1,0 +1,195 @@
+  <!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Добавить груз</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  </head>
+<body>
+  <header class="navbar">
+    <div class="container nav-inner">
+      <div class="logo">
+        <a href="../index.html">
+          <img src="https://i.ibb.co.com/GvcSrYbs/1-edited-free-carve-photos-1.png" alt="logo">
+        </a>
+    </div>
+  </header>
+
+ <main class="container">
+  <div class="card add-cargo-card">
+    <div class="body">
+      <h2>Размещение груза</h2>
+      <p class="muted">Заполните детали, чтобы перевозчики могли предложить точную цену</p>
+      
+      <form id="cargoForm">
+        <div class="form-section">
+          <h3><span class="step-num">1.</span> Маршрут и дата</h3>
+       <div class="grid cols-2">
+  <div>
+    <label>Откуда</label>
+    <select id="from" required>
+      <option value="">Выберите город</option>
+      <optgroup label="Мегаполисы">
+        <option>Алматы</option>
+        <option>Астана</option>
+        <option>Шымкент</option>
+      </optgroup>
+      <optgroup label="Города">
+        <option>Актау</option>
+        <option>Актобе</option>
+        <option>Атырау</option>
+        <option>Аркалык</option>
+        <option>Балхаш</option>
+        <option>Жанаозен</option>
+        <option>Жезказган</option>
+        <option>Караганда</option>
+        <option>Кокшетау</option>
+        <option>Костанай</option>
+        <option>Кызылорда</option>
+        <option>Конаев</option>
+        <option>Павлодар</option>
+        <option>Петропавловск</option>
+        <option>Семей</option>
+        <option>Талдыкорган</option>
+        <option>Тараз</option>
+        <option>Темиртау</option>
+        <option>Туркестан</option>
+        <option>Уральск</option>
+        <option>Усть-Каменогорск</option>
+        <option>Экибастуз</option>
+      </optgroup>
+    </select>
+  </div>
+  <div>
+    <label>Куда</label>
+    <select id="to" required>
+      <option value="">Выберите город</option>
+      <optgroup label="Мегаполисы">
+        <option>Алматы</option>
+        <option>Астана</option>
+        <option>Шымкент</option>
+      </optgroup>
+      <optgroup label="Города">
+        <option>Актау</option>
+        <option>Актобе</option>
+        <option>Атырау</option>
+        <option>Аркалык</option>
+        <option>Балхаш</option>
+        <option>Жанаозен</option>
+        <option>Жезказган</option>
+        <option>Караганда</option>
+        <option>Кокшетау</option>
+        <option>Костанай</option>
+        <option>Кызылорда</option>
+        <option>Конаев</option>
+        <option>Павлодар</option>
+        <option>Петропавловск</option>
+        <option>Семей</option>
+        <option>Талдыкорган</option>
+        <option>Тараз</option>
+        <option>Темиртау</option>
+        <option>Туркестан</option>
+        <option>Уральск</option>
+        <option>Усть-Каменогорск</option>
+        <option>Экибастуз</option>
+      </optgroup>
+    </select>
+  </div>
+       </div>
+          <div style="margin-top: 15px;">
+            <label>Дата готовности к погрузке</label>
+            <input type="date" id="readyDate" required />
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3><span class="step-num">2.</span> О грузе</h3>
+          <div class="grid cols-3">
+            <div>
+              <label>Вес (тонн)</label>
+              <input type="number" id="weight" step="0.1" placeholder="5" required />
+            </div>
+            <div>
+              <label>Объем (м³)</label>
+              <input type="number" id="volume" step="0.1" placeholder="82" />
+            </div>
+            <div>
+              <label>Тип кузова</label>
+              <select id="cargoType" required>
+                <option>Тент</option><option>Рефрижератор</option><option>Фургон</option><option>Бортовой</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="grid cols-3" style="margin-top: 15px;">
+            <div>
+              <label>Длина (м)</label>
+              <input type="number" id="length" step="0.1" placeholder="13.6" />
+            </div>
+            <div>
+              <label>Ширина (м)</label>
+              <input type="number" id="width" step="0.1" placeholder="2.45" />
+            </div>
+            <div>
+              <label>Высота (м)</label>
+              <input type="number" id="height" step="0.1" placeholder="2.7" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3><span class="step-num">3.</span> Условия и оплата</h3>
+          <div class="grid cols-2">
+            <div>
+              <label>Способ погрузки</label>
+              <select id="loading_type">
+                <option>Задняя</option>
+                <option>Боковая</option>
+                <option>Верхняя</option>
+                <option>Полная растентовка</option>
+              </select>
+            </div>
+            <div>
+              <label>Ставка ($ или ₸)</label>
+              <input type="number" id="price" placeholder="50000" required />
+            </div>
+          </div>
+          <div style="margin-top: 15px;">
+            <label>Дополнительное описание</label>
+            <textarea id="description" rows="3" placeholder="Напр: Хрупкий груз, нужна медленная езда..."></textarea>
+          </div>
+        </div>
+
+        <div class="footer-actions">
+          <button type="submit" class="btn primary" id="publishBtn">Опубликовать груз</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    
+    <div class="footer-left">
+      © 2025 Route Hub — все права защищены
+    </div>
+
+    <div class="footer-nav">
+     <a href="../about(test)/about.html">О нас</a>
+     <a href="../newspage/index.html">Новости</a>
+     <a href="../mape/map.html">Карта грузов</a>
+     <a href="../stats(test)/statss.html">Статистика</a>
+    </div>
+
+    
+  </div>
+</footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

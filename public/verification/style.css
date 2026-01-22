@@ -1,0 +1,150 @@
+body{
+  font-family: "Montserrat", sans-serif;
+}
+
+.verify-page {
+  background: #0a0c10;
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.verify-container {
+  max-width: 600px;
+  width: 100%;
+}
+
+.verify-card {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 32px;
+  padding: 40px;
+}
+
+.step-indicator {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.verify-header h1 {
+  font-size: 28px;
+  margin: 0 0 10px;
+}
+.verify-header p {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.upload-section {
+  margin-top: 35px;
+}
+
+.section-title {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.section-title h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.section-title p {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.5;
+}
+.section-title .icon {
+  font-size: 24px;
+}
+
+.upload-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.upload-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 30px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.upload-box:hover {
+  border-color: var(--accent);
+  background: rgba(43, 140, 255, 0.05);
+}
+.upload-box.wide {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.upload-box .plus {
+  font-size: 24px;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.upload-box span {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.verify-footer {
+  margin-top: 40px;
+  text-align: center;
+}
+.security-note {
+  font-size: 11px;
+  opacity: 0.4;
+  margin-bottom: 20px;
+}
+
+.btn-verify {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 18px;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-verify:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(43, 140, 255, 0.3);
+}
+.skip-link {
+  display: block;
+  margin-top: 20px;
+  color: rgba(255, 255, 255, 0.3);
+  text-decoration: none;
+  font-size: 13px;
+}
+
+/* Адаптация под мобилки */
+@media (max-width: 480px) {
+  .upload-grid {
+    grid-template-columns: 1fr;
+  }
+  .verify-card {
+    padding: 25px;
+  }
+}

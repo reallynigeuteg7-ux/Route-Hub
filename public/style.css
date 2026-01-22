@@ -1,0 +1,568 @@
+:root {
+    --bg: #0f1720;
+    --accent: #2b8cff;
+    --muted: #c9d6df;
+    --card-bg: linear-gradient(90deg, var(--accent), #1fa2ff);
+    --card-shadow: 0 10px 25px rgba(2, 6, 23, 0.25);
+    --topbar: #0f1720;
+    --accent-color-mobile: #69aaff;
+    --text-primary: #d6d6d6;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --bg-dark: #0b0f14;
+    --neon-1: #00f0ff; 
+    
+    /* Цвета кнопок по образцу */
+    --button-blue: #007bff; 
+    --button-dark: #0e171f; 
+    --button-border: #00aaff; 
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* СТАРАЯ АНИМАЦИЯ ФОНА */
+body {
+    font-family: "Montserrat", sans-serif;
+    color: white;
+    background: linear-gradient(120deg, #0b0f14, #1b2630, #0b0f14);
+    background-size: 200% 200%;
+    animation: gradientMove 8s ease infinite;
+    overflow-x: hidden; 
+}
+
+@keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* CONTAINERS */
+.container {
+    width: min(1200px, 94%);
+    margin: 0 auto;
+}
+
+/* HEADER */
+.navbar {
+    width: 100%;
+    background: transparent;
+    padding: 16px 0;
+    position: absolute; 
+    top: 0;
+    left: 0;
+    z-index: 10;
+    font-weight: 500;
+}
+
+/* Скрываем ненужный разделитель (белая линия) */
+.divider {
+    display: none;
+}
+
+.nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo img {
+    width: 110px;
+    height: auto;
+}
+
+.menu {
+    display: flex;
+    gap: 32px;
+    margin: 0 auto;
+}
+
+.menu a {
+    color: #d6d6d6;
+    text-decoration: none;
+    font-size: 15px;
+    transition: color 0.3s;
+}
+
+.menu a:hover {
+    color: var(--accent); /* Твой основной синий #2b8cff */
+    text-shadow: 0 0 10px rgba(43, 140, 255, 0.4); /* Мягкое синее свечение */
+}
+
+/* УБИРАЕМ ПОДЧЕРКИВАНИЕ У ССЫЛКИ ВОКРУГ КНОПКИ "АВТОРИЗАЦИЯ" */
+a:has(> .signup),
+.navbar a[href*="login.html"] {
+    text-decoration: none;
+}
+
+.signup {
+    /* Стиль кнопки авторизации */
+    background: #fff;
+    color: #000;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: "Montserrat";
+    display: block; 
+}
+
+.signup:hover {
+    background: #e6e6e6;
+    transform: translateY(-1px);
+}
+
+/* Скрываем бургер-меню и мобильное меню по умолчанию */
+.burger,
+.mobile-menu {
+    display: none;
+}
+
+/* HERO */
+.hero {
+    min-height: 680px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    padding-top: 80px; 
+}
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(
+        ellipse at 20% 20%,
+        rgba(43, 140, 255, 0.12),
+        transparent 6%
+        ),
+        linear-gradient(180deg, rgba(2, 6, 22, 0.6), rgba(2, 6, 22, 0));
+    z-index: 1;
+}
+
+.hero-inner {
+    position: relative;
+    z-index: 2;
+    max-width: 850px;
+    margin: 0 auto;
+}
+
+.hero h1 {
+    font-size: 48px;
+    line-height: 1.05;
+    color: #fff;
+    margin-bottom: 12px;
+}
+
+.subtitle {
+    font-size: 20px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 22px;
+}
+
+/* --- СТИЛИ КНОПОК HERO --- */
+.buttons {
+    display: flex;
+    gap: 20px; 
+    justify-content: center;
+    margin-top: 25px; 
+    /* Добавляем margin: 0 auto; чтобы центрировать контейнер кнопок, если он меньше ширины родителя */
+    margin-left: auto;
+    margin-right: auto;
+    width: max-content; /* Ширина по контенту */
+}
+
+.buttons .btn {
+    padding: 14px 30px; 
+    border-radius: 10px; 
+    text-decoration: none;
+    font-weight: 600;
+    border: 2px solid transparent;
+    transition: transform 0.3s, box-shadow 0.3s, background 0.3s, border-color 0.3s;
+    cursor: pointer;
+    font-size: 16px;
+    display: inline-block;
+}
+
+/* 1. Кнопка "Для грузовладельцев" (Primary) */
+.buttons .btn.primary {
+     background: linear-gradient(
+    90deg,
+    rgba(0, 240, 255, 0.06),
+    rgba(31, 162, 255, 0.08)
+  );
+    color: #fff;
+    border: 1px solid rgba(0, 240, 255, 0.14);
+     box-shadow: 0 8px 30px rgba(0, 150, 255, 0.06);
+}
+
+.buttons .btn.primary:hover {
+    transform: translateY(-4px); 
+    box-shadow: 0 8px 15px rgba(0, 123, 255, 0.5); 
+    background: #0069d9; 
+    border-color: #0069d9;
+}
+
+
+/* 2. Кнопка "Для перевозчиков" (Ghost/Контур) */
+.buttons .btn.ghost {
+    background: var(--button-dark);
+    color: #fff;
+    border-color: var(--button-border); 
+}
+
+.buttons .btn.ghost:hover {
+    transform: translateY(-4px); 
+    box-shadow: 0 8px 15px rgba(0, 123, 255, 0.2); 
+    background: #1a2430; 
+    border-color: var(--button-border);
+}
+/* --- КОНЕЦ СТИЛЕЙ КНОПОК HERO --- */
+
+
+.truck-svg {
+    position: absolute;
+    right: 8%;
+    bottom: -30px;
+    width: 520px;
+    opacity: 0.22;
+    z-index: 0;
+}
+
+/* STATS */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 26px;
+    transform: translateY(-60px);
+    margin-bottom: 40px;
+}
+
+.card {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    color: #12313b;
+    box-shadow: 0 10px 25px rgba(2, 6, 23, 0.15);
+    transition: transform 0.3s, box-shadow 0.3s;
+    text-align: center;
+}
+.card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 0 15px rgba(0, 123, 255, 0.6);
+}
+
+.card-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.card h3 {
+    font-size: 20px;
+    margin-bottom: 6px;
+    color: black;
+}
+
+.card p {
+    color: black;
+}
+
+/* FEATURES */
+.features {
+    margin: 80px auto;
+    text-align: center;
+}
+
+.features-title {
+    font-size: 32px;
+    color: #fff;
+    margin-bottom: 40px;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+}
+
+.feature-card {
+    background: #f7fbff;
+    border-radius: 16px;
+    padding: 30px 28px;
+    text-align: left;
+    box-shadow: 0 10px 25px rgba(2, 6, 23, 0.15);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.feature-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 0 15px rgba(0, 123, 255, 0.6);
+}
+
+.feature-card h3 {
+    font-size: 22px;
+    color: #0b2b34;
+    margin-bottom: 16px;
+}
+
+.feature-card ul {
+    list-style: none;
+}
+
+.feature-card li {
+    color: #3a5058;
+    margin-bottom: 10px;
+    padding-left: 18px;
+    position: relative;
+}
+
+.feature-card li::before {
+    content: "→";
+    color: #2b8cff;
+    position: absolute;
+    left: 0;
+}
+
+/* FOOTER */
+.site-footer {
+    background: #0b0f14;
+    padding: 40px 0;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    margin-top: 80px;
+}
+
+.site-footer .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.footer-left {
+    font-size: 16px;
+    color: rgba(255,255,255,0.7);
+}
+
+.footer-nav {
+    display: flex;
+    gap: 26px;
+}
+
+.footer-nav a {
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    font-size: 15px;
+    transition: 0.3s;
+}
+
+.footer-nav a:hover {
+     color: var(--accent); /* Твой основной синий #2b8cff */
+    text-shadow: 0 0 10px rgba(43, 140, 255, 0.4); /* Мягкое синее свечение */
+}
+
+
+
+/* --- МОБИЛЬНАЯ АДАПТАЦИЯ (900PX) --- */
+@media (max-width: 900px) {
+
+
+    /* Скрываем десктопные ссылки */
+    .menu {
+        display: none;
+    }
+    
+    /* Скрываем ДЕСКТОПНУЮ кнопку авторизации, которая отображалась посередине экрана */
+    #auth-container { 
+    display: none;
+}
+    
+    /* ПОКАЗЫВАЕМ БУРГЕР-МЕНЮ */
+    .burger {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 28px;
+        height: 20px;
+        cursor: pointer;
+        z-index: 30;
+        margin-left: auto; 
+    }
+
+    .burger span {
+        height: 3px;
+        width: 100%;
+        background: #fff;
+        border-radius: 2px;
+        transition: 0.3s;
+    }
+
+    /* Анимация бургера */
+    .burger.open span:nth-child(1) { 
+        transform: rotate(45deg) translate(5px, 5px);
+    } 
+    .burger.open span:nth-child(2) { 
+        opacity: 0; 
+    } 
+    .burger.open span:nth-child(3) { 
+        transform: rotate(-45deg) translate(6px, -6px); 
+    }
+
+    /* Мобильное меню */
+    .mobile-menu {
+        display: none;
+        position: absolute;
+        top: 70px; 
+        right: 20px; 
+        width: 220px;
+        background: var(--bg-dark);
+        border-radius: 12px;
+        padding: 16px;
+        flex-direction: column;
+        gap: 14px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        z-index: 25;
+    }
+
+    .mobile-menu.active {
+        display: flex;
+    }
+    
+    /* Стиль ссылок в мобильном меню */
+    .mobile-menu a:not(.signup-mobile) {
+        color: #fff; 
+        text-decoration: none;
+        font-size: 15px;
+        transition: background 0.2s;
+        padding: 8px 10px; 
+        border-radius: 6px;
+        display: block; 
+    }
+    .mobile-menu a:not(.signup-mobile):hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Кнопка Авторизации в мобильном меню */
+    .mobile-menu .signup-mobile {
+        display: block; 
+        margin-top: 10px; 
+        padding: 0; 
+    }
+    
+    .mobile-menu .signup-mobile .signup {
+        width: 100%;
+        padding: 10px 20px;
+        background: var(--accent-color-mobile); 
+        color: #000; 
+        font-weight: 700;
+        margin: 0;
+        display: block; 
+    }
+
+    /* Коррекция основного контента */
+    .hero {
+        padding-top: 80px; 
+    }
+
+    .hero h1 {
+        font-size: 34px;
+    }
+    .truck-svg {
+        display: none;
+    }
+    .stats {
+        grid-template-columns: 1fr;
+        transform: translateY(-30px);
+    }
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* FOOTER (Мобильный) */
+    .site-footer .container {
+        flex-direction: column;
+        align-items: center; 
+        text-align: center;
+        gap: 10px; 
+        padding: 0 20px;
+    }
+
+    .footer-left {
+        padding: 0;
+        order: 1; 
+        font-size: 15px;
+    }
+
+    .footer-nav {
+        padding: 0;
+        justify-content: center;
+        flex-wrap: wrap; 
+        gap: 18px; 
+        order: 2; 
+        padding-bottom: 5px;
+    }
+}
+
+
+/* Стиль для кнопки выхода в стиле Route Hub */
+.logout-btn {
+    background: var(--accent); /* Твой основной синий цвет #2b8cff */
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 20px;
+    font-weight: 600;
+    font-family: "Montserrat", sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(43, 140, 255, 0.3);
+    margin-left: 10px;
+}
+
+.logout-btn:hover {
+    background: #1a7bff; /* Чуть темнее при наведении */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(43, 140, 255, 0.5);
+}
+
+.logout-btn:active {
+    transform: translateY(0);
+}
+
+/* Для мобильной версии, если нужно, чтобы кнопка была шире */
+@media (max-width: 900px) {
+    #auth-container-mobile .logout-btn {
+        width: 100%;
+        margin-top: 5px;
+    }
+}
+
+
+
+
+
+/* --- МОБИЛЬНАЯ АДАПТАЦИЯ (768PX) --- */
+@media (max-width: 768px) {
+    /* !!! ИСПРАВЛЕНИЕ: Убираем горизонтальный паддинг и центрируем блок кнопок !!! */
+    .buttons {
+        flex-direction: column;
+        width: 100%;
+        gap: 12px;
+        padding: 0; /* Убираем padding */
+        max-width: 320px; /* Ограничиваем ширину контейнера кнопок */
+        margin-left: auto; /* Центрируем контейнер */
+        margin-right: auto;
+    }
+
+    .btn {
+        width: 100%; /* Кнопки занимают всю ширину родителя (.buttons) */
+        max-width: none;
+        font-size: 15px;
+        padding: 14px 0;
+    }
+}
