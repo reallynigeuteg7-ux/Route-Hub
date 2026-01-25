@@ -1,6 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
     const cargoForm = document.getElementById('cargoForm');
     
+    // Элементы модалки
+    const successModal = document.getElementById('success-modal');
+    const btnOk = document.getElementById('btn-ok');
+
     if (cargoForm) {
         cargoForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -14,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const cargoData = {
                     from_location: document.getElementById('from').value,
                     to_location: document.getElementById('to').value,
-                    ready_date: document.getElementById('readyDate').value, // Соединяем с сервером
+                    ready_date: document.getElementById('readyDate').value,
                     weight: document.getElementById('weight').value,
                     volume: document.getElementById('volume').value || 0,
                     type: document.getElementById('cargoType').value,
@@ -35,8 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 if (response.ok) {
-                    alert("Груз опубликован!");
-                    window.location.href = "."; // Укажи путь к своей главной
+                    // ПОКАЗЫВАЕМ КРАСИВУЮ МОДАЛКУ ВМЕСТО ALERT
+                    successModal.style.display = 'flex';
                 } else {
                     alert("Ошибка сервера. Проверь данные.");
                 }
@@ -46,6 +50,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.disabled = false;
                 btn.textContent = originalText;
             }
+        });
+    }
+
+    // Логика закрытия модалки
+    if (btnOk) {
+        btnOk.addEventListener('click', () => {
+            successModal.style.display = 'none';
+            window.location.href = '../profile.html'; // Уходим в профиль
         });
     }
 });

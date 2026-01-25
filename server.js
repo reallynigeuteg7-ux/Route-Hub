@@ -26,7 +26,8 @@ db.serialize(() => {
         email TEXT UNIQUE,
         password TEXT,
         phone TEXT,
-        company TEXT
+        company TEXT,
+        role TEXT DEFAULT 'client'  -- 'client'
     )`);
 
     // Таблица грузов
@@ -77,15 +78,20 @@ function checkAuth(req, res, next) {
 
 // РЕГИСТРАЦИЯ (то, чего не хватало)
 app.post('/api/register', async (req, res) => {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        db.run(`INSERT INTO users (name, email, password) VALUES (?, ?, ?)`, 
-        [name, email, hashedPassword], function(err) {
+        // Добавляем роль в запрос
+        db.run(`INSERT INTO users (name, email, password, role, phone) VALUES (?, ?, ?, ?, ?)`, 
+        [name, email, hashedPassword, role || 'client'], function(err) {
             if (err) {
-                return res.status(400).json({ error: 'Email уже занят или ошибка БД' });
+                console.error("ОШИБКА БАЗЫ:", err.message); // Это появится в терминале VS Code
+                if (err.message.includes("UNIQUE")) {
+                    return res.status(400).json({ error: 'Этот Email уже занят' });
+                }
+                return res.status(500).json({ error: 'Ошибка базы: ' + err.message });
             }
-            req.session.userId = this.lastID; // Логиним сразу
+            req.session.userId = this.lastID;
             res.json({ ok: true });
         });
     } catch (e) {
@@ -112,7 +118,7 @@ app.get('/api/me', (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Unauthorized' });
     const userId = req.session.userId;
 
-    db.get('SELECT id, name, email, phone, company FROM users WHERE id = ?', [userId], (err, user) => {
+    db.get('SELECT id, name, email, phone, company, role FROM users WHERE id = ?', [userId], (err, user) => {
         if (err || !user) return res.status(401).json({ error: 'User not found' });
         
         db.get('SELECT COUNT(*) as activeCount FROM loads WHERE userId = ?', [userId], (err, row) => {
