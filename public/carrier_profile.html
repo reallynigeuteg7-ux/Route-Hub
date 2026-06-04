@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROUTEHUB — Перевозчик</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="profile.css?v=20260506-7">
+</head>
+<body>
+
+<aside class="sidebar">
+   <a href="index.html" class="logo-link">           
+    <img class="logo" src="images/logo2.png" alt="logo">
+    </a>
+
+    <div class="nav-icon active" onclick="switchTab('personal')" title="Профиль">
+        <i class="fa-solid fa-house-chimney"></i>
+    </div>
+
+    <div class="nav-icon" onclick="switchTab('docs')" title="Документы">
+        <i class="fa-solid fa-file-shield"></i>
+    </div>
+
+    <div class="nav-icon" onclick="switchTab('balance')" title="Баланс">
+        <i class="fa-solid fa-wallet"></i>
+    </div>
+
+    <div class="nav-icon" onclick="switchTab('messages')" title="Сообщения">
+        <i class="fa-solid fa-comment-dots"></i>
+    </div>
+
+    <div style="margin-top: auto;" class="nav-icon" id="logout-btn">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+    </div>
+</aside>
+
+<div class="main-wrapper">
+    <section class="content-area">
+        <div id="tab-personal" class="profile-tab active-tab">
+            <header>
+                <div>
+                    <h1>Control Center</h1>
+                    <p style="color: var(--muted); margin-top: 5px;">Добро пожаловать, <span id="user-name-header">...</span></p>
+                </div>
+            </header>
+
+            <div class="card-neon balance-section">
+                <div>
+                    <span style="color: var(--muted); font-size: 14px;">Доступный лимит</span>
+                    <div class="amount" id="user-balance-display">0.00 ₸</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px;">
+                <h2 id="loads-section-title" style="font-size: 20px; margin-bottom: 20px;">Мои ставки</h2>
+                <div class="card-neon" id="my-cargo-list" style="padding: 0; overflow: hidden; min-height: 100px;">
+                    <p style="padding: 20px; color: var(--muted);">Загрузка ставок...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-docs" class="profile-tab" style="display: none;">
+            <header>
+                <h1>Верификация данных</h1>
+                <p style="color: var(--muted);">
+                    Статус аккаунта:
+                    <span id="verification-status" style="color: #f59e0b;">Ожидает проверки</span>
+                </p>
+            </header>
+
+            <div class="card-neon" style="padding:16px; margin-top:14px;">
+                <h2 style="margin:0 0 12px; font-size:16px;">Заполнить данные</h2>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                    <div>
+                        <div style="font-size:12px; color:var(--muted); font-weight:700;">Телефон</div>
+                        <input id="phoneInput" type="text" readonly
+                               style="width:100%; margin-top:6px; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.06); color:white; outline:none;">
+                    </div>
+
+                    <div>
+                        <div style="font-size:12px; color:var(--muted); font-weight:700;">Тип лица</div>
+                        <select id="personTypeSelect"
+                                style="width:100%; margin-top:6px; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.06); color:white; outline:none;" disabled>
+                            <option value="too">&#1058;&#1054;&#1054;</option>
+                                    <option value="ip">&#1048;&#1055;</option>
+                                    <option value="self_employed">&#1057;&#1072;&#1084;&#1086;&#1079;&#1072;&#1085;&#1103;&#1090;&#1099;&#1081;</option>
+                        </select>
+                    </div>
+
+                    <div style="grid-column: 1 / -1;">
+                        <div style="font-size:12px; color:var(--muted); font-weight:700;">Компания</div>
+                        <input id="companyInput" type="text" placeholder="Напр. RouteHub LLC"
+                               style="width:100%; margin-top:6px; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.06); color:white; outline:none;" readonly>
+                    </div>
+
+                    <div style="grid-column: 1 / -1; display:flex; gap:10px; align-items:center; margin-top:4px;">
+                        <button id="saveVerificationBtn" class="btn-main" type="button" style="padding:10px 16px;">
+                            Сохранить
+                        </button>
+                        <span id="saveVerificationMsg" style="color: var(--muted); font-size: 13px;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-neon docs-grid" style="margin-top: 14px;">
+                <div class="doc-item" onclick="document.getElementById('upload-id').click()">
+                    <div class="doc-header">
+                        <i class="fa-solid fa-id-card"></i>
+                        <span class="dot status-checking" title="На проверке"></span>
+                    </div>
+                    <h3>Уд. личности / Паспорт</h3>
+                    <p>На проверке (отправлено 01.02.2026)</p>
+                    <input type="file" id="upload-id" hidden onchange="handleFileUpload(this, 'Паспорт')">
+                </div>
+
+                <div class="doc-item" onclick="document.getElementById('upload-sts').click()">
+                    <div class="doc-header">
+                        <i class="fa-solid fa-truck-ramp-box"></i>
+                        <span class="dot status-uploaded" title="Загружено"></span>
+                    </div>
+                    <h3>Техпаспорт (СРТС)</h3>
+                    <p>Файл: car_docs_final.pdf</p>
+                    <input type="file" id="upload-sts" hidden onchange="handleFileUpload(this, 'Техпаспорт')">
+                </div>
+<div class="doc-item upload-new" onclick="document.getElementById('upload-generic').click()">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <h3>&#1057;&#1074;-&#1090;&#1074;&#1086; &#1086; &#1075;&#1086;&#1089;.&#1088;&#1077;&#1075;&#1080;&#1089;&#1090;&#1088;&#1072;&#1094;&#1080;&#1080;</h3>
+                    <p>JPG, PNG &#1080;&#1083;&#1080; PDF &#1076;&#1086; 10MB</p>
+                    <div id="docsUploadMsg" class="doc-caption">&#1060;&#1072;&#1081;&#1083; &#1085;&#1077; &#1074;&#1099;&#1073;&#1088;&#1072;&#1085;</div>
+                    <input type="file" id="upload-generic" accept=".jpg,.jpeg,.png,.pdf" hidden onchange="handleFileUpload(this, 'generic')">
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-messages" class="profile-tab" style="display: none;">
+            <div id="chat-container-slot" style="height: 600px;"></div>
+        </div>
+
+        <div id="tab-balance" class="profile-tab" style="display: none;">
+            <header class="section-header section-header--balance">
+                <div>
+                    <h1>&#1060;&#1080;&#1085;&#1072;&#1085;&#1089;&#1086;&#1074;&#1099;&#1081; &#1089;&#1095;&#1077;&#1090;</h1>
+                </div>
+            </header>
+
+            <div class="balance-card">
+                <h3>&#1058;&#1077;&#1082;&#1091;&#1097;&#1080;&#1081; &#1073;&#1072;&#1083;&#1072;&#1085;&#1089;</h3>
+                <div class="balance-amount">
+                    <span id="user-balance">0.00</span> <small>&#8376;</small>
+                </div>
+                <p class="balance-info">&#1044;&#1083;&#1103; &#1087;&#1086;&#1087;&#1086;&#1083;&#1085;&#1077;&#1085;&#1080;&#1103; &#1087;&#1077;&#1088;&#1077;&#1074;&#1077;&#1076;&#1080;&#1090;&#1077; &#1076;&#1077;&#1085;&#1100;&#1075;&#1080; &#1087;&#1086; &#1088;&#1077;&#1082;&#1074;&#1080;&#1079;&#1080;&#1090;&#1072;&#1084; RouteHub &#1080; &#1086;&#1090;&#1087;&#1088;&#1072;&#1074;&#1100;&#1090;&#1077; &#1082;&#1074;&#1080;&#1090;&#1072;&#1085;&#1094;&#1080;&#1102; &#1085;&#1072; &#1087;&#1088;&#1086;&#1074;&#1077;&#1088;&#1082;&#1091;.</p>
+            </div>
+
+            <div class="balance-card topup-card">
+                <h3>&#1055;&#1086;&#1087;&#1086;&#1083;&#1085;&#1080;&#1090;&#1100; &#1073;&#1072;&#1083;&#1072;&#1085;&#1089;</h3>
+                <div id="topup-details" class="topup-details">&#1047;&#1072;&#1075;&#1088;&#1091;&#1078;&#1072;&#1077;&#1084; &#1088;&#1077;&#1082;&#1074;&#1080;&#1079;&#1080;&#1090;&#1099;...</div>
+                <form id="topup-form" class="topup-form">
+                    <label>
+                        &#1057;&#1091;&#1084;&#1084;&#1072; &#1087;&#1086;&#1087;&#1086;&#1083;&#1085;&#1077;&#1085;&#1080;&#1103;
+                        <input id="topup-amount" type="number" min="1" step="1" placeholder="&#1053;&#1072;&#1087;&#1088;&#1080;&#1084;&#1077;&#1088;, 50000" required>
+                    </label>
+                    <label>
+                        &#1050;&#1074;&#1080;&#1090;&#1072;&#1085;&#1094;&#1080;&#1103; &#1086;&#1073; &#1086;&#1087;&#1083;&#1072;&#1090;&#1077;
+                        <input id="topup-receipt" type="file" accept="image/*,.pdf" required>
+                    </label>
+                    <button class="btn-deposit" type="submit">
+                        <i class="fas fa-receipt"></i> &#1071; &#1086;&#1087;&#1083;&#1072;&#1090;&#1080;&#1083;
+                    </button>
+                    <p id="topup-message" class="topup-message"></p>
+                </form>
+            </div>
+
+            <div class="balance-card withdraw-card">
+                <h3>&#1042;&#1099;&#1074;&#1077;&#1089;&#1090;&#1080; &#1089;&#1088;&#1077;&#1076;&#1089;&#1090;&#1074;&#1072;</h3>
+                <form id="withdraw-form" class="topup-form">
+                    <label>
+                        &#1057;&#1091;&#1084;&#1084;&#1072; &#1074;&#1099;&#1074;&#1086;&#1076;&#1072;
+                        <input id="withdraw-amount" type="number" min="1" step="1" placeholder="&#1053;&#1072;&#1087;&#1088;&#1080;&#1084;&#1077;&#1088;, 50000" required>
+                    </label>
+                    <label>
+                        &#1050;&#1091;&#1076;&#1072; &#1074;&#1099;&#1074;&#1077;&#1089;&#1090;&#1080;
+                        <textarea id="withdraw-details" rows="3" placeholder="Kaspi / IBAN / &#1090;&#1077;&#1083;&#1077;&#1092;&#1086;&#1085; / &#1060;&#1048;&#1054;" required></textarea>
+                    </label>
+                    <button class="btn-withdraw" type="submit">
+                        <i class="fas fa-money-bill-transfer"></i> &#1042;&#1099;&#1074;&#1077;&#1089;&#1090;&#1080;
+                    </button>
+                    <p id="withdraw-message" class="topup-message"></p>
+                </form>
+            </div>
+
+            <div class="history-section">
+                <h4>&#1047;&#1072;&#1103;&#1074;&#1082;&#1080; &#1085;&#1072; &#1074;&#1099;&#1074;&#1086;&#1076;</h4>
+                <div id="withdraw-requests" class="history-list">
+                    <p class="empty-text">&#1047;&#1072;&#1103;&#1074;&#1086;&#1082; &#1085;&#1072; &#1074;&#1099;&#1074;&#1086;&#1076; &#1087;&#1086;&#1082;&#1072; &#1085;&#1077;&#1090;</p>
+                </div>
+            </div>
+            <div class="history-section">
+                <h4>&#1047;&#1072;&#1103;&#1074;&#1082;&#1080; &#1085;&#1072; &#1087;&#1086;&#1087;&#1086;&#1083;&#1085;&#1077;&#1085;&#1080;&#1077;</h4>
+                <div id="topup-requests" class="history-list">
+                    <p class="empty-text">&#1047;&#1072;&#1103;&#1074;&#1086;&#1082; &#1087;&#1086;&#1082;&#1072; &#1085;&#1077;&#1090;</p>
+                </div>
+            </div>
+
+            <div class="history-section">
+                <h4>&#1048;&#1089;&#1090;&#1086;&#1088;&#1080;&#1103; &#1086;&#1087;&#1077;&#1088;&#1072;&#1094;&#1080;&#1081;</h4>
+                <div id="balance-history" class="history-list">
+                    <p class="empty-text">&#1048;&#1089;&#1090;&#1086;&#1088;&#1080;&#1103; &#1087;&#1083;&#1072;&#1090;&#1077;&#1078;&#1077;&#1081; &#1087;&#1091;&#1089;&#1090;&#1072;</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <aside class="right-panel">
+        <div class="profile-card">
+            <div class="avatar">
+                <div class="avatar-placeholder avatar-big">--</div>
+            </div>
+            <h2 id="user-name-display" style="margin: 0; font-size: 22px;">Загрузка...</h2>
+            <div id="user-role-display" class="status-badge">Определяем роль...</div>
+        </div>
+
+        <div class="card-neon" style="padding: 20px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <span style="color: var(--muted);">Рейтинг</span>
+                <span id="profile-rating-value" style="color: #f59e0b;"><i class="fa-solid fa-star"></i> --</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--muted);">Активных заявок</span>
+                <span id="active-loads-count">0</span>
+            </div>
+        </div>
+    </aside>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script src="chat-template.js?v=20260506-3"></script>
+<script src="profilescript.js?v=20260506-7"></script>
+
+</body>
+</html>

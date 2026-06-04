@@ -17,6 +17,8 @@
 }
 
 .stats-header { margin-bottom: 30px; }
+.stats-logo-link { display: inline-flex; align-items: center; margin-bottom: 14px; }
+.stats-logo { width: 100px; height: auto; filter: drop-shadow(0 0 15px rgb(46, 92, 110)) drop-shadow(0 0 40px rgba(0, 183, 255, 0.404)); }
 .back-btn { color: var(--accent); text-decoration: none; font-size: 14px; margin-bottom: 10px; display: inline-block; }
 .stats-header h1 { font-size: 32px; margin: 5px 0; }
 .stats-header p { opacity: 0.5; }
@@ -107,3 +109,6 @@
 @media (max-width: 768px) {
     .stats-secondary-grid { grid-template-columns: 1fr; }
 }
+.stats-bottom-grid { margin-top: 20px; }
+.btn-export:disabled { opacity: 0.55; cursor: wait; }
+.top-routes strong { white-space: nowrap; }

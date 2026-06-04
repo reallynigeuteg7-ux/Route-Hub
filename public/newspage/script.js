@@ -1,43 +1,93 @@
-  async function updateNavbar() {
-    try {
-      const response = await fetch('/api/me'); // Путь к API обычно абсолютный
-      
-      if (response.ok) {
-        const user = await response.json();
-        
-        const userHtml = `
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <span style="color: var(--text-primary); font-weight: 600; font-size: 14px; letter-spacing: 0.5px;">
-              ${user.name}
-            </span>
-            <button onclick="logoutUser()" class="logout-btn">
-              Выйти
-            </button>
-          </div>
-        `;
+// --------------------
+// Mobile menu
+// --------------------
+const burger = document.getElementById('burger');
+const mobileMenu = document.getElementById('mobileMenu');
+const mobileClose = document.getElementById('mobileClose');
 
-        // Обновляем оба контейнера, которые мы пометили ID
-        const desktopAuth = document.getElementById('auth-container');
-        const mobileAuth = document.getElementById('auth-container-mobile');
-        
-        if(desktopAuth) desktopAuth.innerHTML = userHtml;
-        if(mobileAuth) mobileAuth.innerHTML = userHtml;
-      }
-    } catch (err) {
-      console.log('Пользователь не авторизован');
-    }
-  }
+function openMenu() {
+  if (!burger || !mobileMenu) return;
+  burger.classList.add('open');
+  mobileMenu.classList.add('active');
+  burger.setAttribute('aria-expanded', 'true');
+}
+function closeMenu() {
+  if (!burger || !mobileMenu) return;
+  burger.classList.remove('open');
+  mobileMenu.classList.remove('active');
+  burger.setAttribute('aria-expanded', 'false');
+}
 
-  async function logoutUser() {
-    await fetch('/api/logout', { method: 'POST' });
-    window.location.reload();
-  }
+if (burger && mobileMenu) {
+  burger.addEventListener('click', () => {
+    const active = mobileMenu.classList.contains('active');
+    active ? closeMenu() : openMenu();
+  });
 
-  document.addEventListener('DOMContentLoaded', updateNavbar);
+  if (mobileClose) mobileClose.addEventListener('click', closeMenu);
 
-  const burger = document.getElementById('burger');
-    const menu = document.getElementById('mobileMenu');
-    burger.addEventListener('click', () => {
-      burger.classList.toggle('open');
-      menu.classList.toggle('active');
+  document.addEventListener('click', (e) => {
+    if (!mobileMenu.classList.contains('active')) return;
+    const isInside = mobileMenu.contains(e.target) || burger.contains(e.target);
+    if (!isInside) closeMenu();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeMenu();
+  });
+}
+
+// --------------------
+// Auth: avatar icon + logout
+// --------------------
+async function updateNavbar() {
+  try {
+    const response = await fetch('/api/me', { credentials: 'include' });
+    if (!response.ok) return;
+
+    const user = await response.json();
+
+    const profileHref = user?.role === 'carrier' ? '/carrier_profile.html' : '/profile.html';
+
+    const userHtml = `
+      <div class="auth-user">
+        <a href="${profileHref}" class="profile-link" title="${(user?.name || 'Профиль').replace(/"/g, '&quot;')}">
+          <span class="profile-avatar profile-avatar-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 21a8 8 0 0 0-16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/></svg></span><span class="sr-only">Профиль</span>
+        </a>
+        <button type="button" class="logout-btn" data-logout>Выйти</button>
+      </div>
+    `;
+
+    const desktop = document.getElementById('auth-container');
+    const mobile = document.getElementById('auth-container-mobile');
+
+    if (desktop) desktop.innerHTML = userHtml;
+    if (mobile) mobile.innerHTML = userHtml;
+
+    document.querySelectorAll('[data-logout]').forEach(btn => {
+      btn.addEventListener('click', logoutUser);
     });
+
+  } catch (e) {
+    // не авторизован — оставляем кнопку
+  }
+}
+
+async function logoutUser() {
+  try {
+    await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+  } catch (e) {}
+  location.reload();
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+document.addEventListener('DOMContentLoaded', updateNavbar);
+

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Поиск грузов онлайн | Найти груз для перевозки — RouteHub</title>
+  <meta name="description" content="Онлайн-поиск грузов на RouteHub: фильтры по маршруту, кузову, весу и дате для перевозчиков по Казахстану и СНГ." />
+  <meta name="keywords" content="поиск грузов, найти груз, грузы для перевозки, груз Казахстан, RouteHub" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="/page2/index2.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Поиск грузов онлайн — RouteHub" />
+  <meta property="og:description" content="Найдите груз для перевозки по маршруту, весу, типу кузова и дате." />
+  <link rel="stylesheet" href="style.css?v=20260510-1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a class="logo" href="../index.html" aria-label="RouteHub"><img src="../images/logo.png" alt="RouteHub Logistics"></a>
+      <nav class="menu" aria-label="Основная навигация">
+        <a href="../about(test)/about.html">О нас</a>
+        <a href="../newspage/index.html">Новости</a>
+        <a href="../mape/map.html">Карта грузов</a>
+        <a href="../stats(test)/statss.html">Статистика</a>
+      </nav>
+      <div id="auth-container-desktop"><a class="signup" href="../login.html">Авторизация</a></div>
+      <button class="burger" id="burger" type="button" aria-label="Меню"><span></span><span></span><span></span></button>
+      <div class="mobile-menu" id="mobileMenu">
+        <a href="../about(test)/about.html">О нас</a>
+        <a href="../newspage/index.html">Новости</a>
+        <a href="../mape/map.html">Карта грузов</a>
+        <a href="../stats(test)/statss.html">Статистика</a>
+        <div id="auth-container-mobile"></div>
+      </div>
+    </div>
+  </header>
+
+  <div id="search-view">
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <span class="eyebrow">RouteHub для перевозчиков</span>
+          <h1>Найти груз быстрее</h1>
+          <p>Смотрите свежие заявки, фильтруйте по направлению, кузову, весу и дате. Открытые грузы обновляются автоматически.</p>
+        </div>
+      </div>
+    </section>
+
+    <main class="container search-shell">
+      <section class="search-card" role="region" aria-label="Поиск грузов">
+        <div class="search-head">
+          <div>
+            <span class="section-label">Фильтр заявок</span>
+            <h2>Поиск грузов</h2>
+          </div>
+          <div class="result-chip">Найдено <span id="resultsCount">0</span></div>
+        </div>
+
+        <form id="searchForm" class="search-form">
+          <div class="fields-grid fields-main">
+            <label class="field"><span>Откуда</span><select id="qFrom" name="from"></select></label>
+            <label class="field"><span>Куда</span><select id="qTo" name="to"></select></label>
+            <label class="field"><span>Кузов</span><select id="qBody" name="body"></select></label>
+          </div>
+          <div class="fields-grid fields-extra">
+            <label class="field"><span>Вес от, т</span><input type="number" id="qWmin" name="wmin" placeholder="0"></label>
+            <label class="field"><span>Вес до, т</span><input type="number" id="qWmax" name="wmax" placeholder="20"></label>
+            <label class="field"><span>Дата</span><input type="date" id="qDate" name="date"></label>
+            <label class="field"><span>Сортировка</span><select id="sortSelect"><option value="date_desc">Сначала свежие</option><option value="price_desc">Сначала дорогие</option></select></label>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Найти грузы</button>
+            <button type="button" class="btn btn-ghost" id="resetBtn">Сбросить</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="results-section" aria-label="Результаты поиска">
+        <div class="results-top">
+          <div>
+            <span class="section-label">Открытые заявки</span>
+            <h2>Подходящие грузы</h2>
+          </div>
+          <p>Показываем только актуальные открытые грузы.</p>
+        </div>
+        <div id="results" class="results-grid"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="details-view" style="display:none;">
+    <div class="container details-shell">
+      <button onclick="backToSearch()" class="btn btn-ghost">← Назад к списку</button>
+      <div id="details-content"></div>
+    </div>
+  </div>
+
+
+  <div class="auth-modal" id="authRequiredModal" aria-hidden="true">
+    <div class="auth-modal__backdrop" data-auth-modal-close></div>
+    <div class="auth-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="authRequiredTitle">
+      <button class="auth-modal__close" type="button" aria-label="Закрыть" data-auth-modal-close>×</button>
+      <div class="auth-modal__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="34" height="34" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M6.5 11h11A1.5 1.5 0 0 1 19 12.5v6A1.5 1.5 0 0 1 17.5 20h-11A1.5 1.5 0 0 1 5 18.5v-6A1.5 1.5 0 0 1 6.5 11Z" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 15v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <p class="auth-modal__eyebrow">RouteHub</p>
+      <h2 id="authRequiredTitle">Сначала войдите в аккаунт</h2>
+      <p class="auth-modal__text">Подробная информация о грузе, контакты и ставки доступны только после авторизации или регистрации.</p>
+      <div class="auth-modal__actions">
+        <a class="auth-modal__primary" href="../login.html">Войти</a>
+        <a class="auth-modal__secondary" href="../login.html?mode=register">Зарегистрироваться</a>
+      </div>
+    </div>
+  </div>
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-left">© 2026 ROUTE HUB — все права защищены</div>
+      <div class="footer-nav">
+        <a href="../about(test)/about.html">О нас</a>
+        <a href="../newspage/index.html">Новости</a>
+        <a href="../mape/map.html">Карта грузов</a>
+        <a href="../stats(test)/statss.html">Статистика</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="script.js?v=20260510-2"></script>
+</body>
+</html>

@@ -38,11 +38,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify(cargoData)
                 });
 
+                const result = await response.json().catch(() => null);
+
                 if (response.ok) {
                     // ПОКАЗЫВАЕМ КРАСИВУЮ МОДАЛКУ ВМЕСТО ALERT
                     successModal.style.display = 'flex';
                 } else {
-                    alert("Ошибка сервера. Проверь данные.");
+                    alert(result?.error || "Ошибка сервера. Проверь данные.");
                 }
             } catch (err) {
                 alert("Ошибка сети. Сервер запущен?");

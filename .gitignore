@@ -1,0 +1,66 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p8
+*.p12
+*.jks
+*.keystore
+keystore.properties
+local.properties
+
+# Dependencies
+node_modules/
+routehub-app/node_modules/
+
+# Runtime data and uploads
+uploads/
+db/
+*.db
+*.sqlite
+*.sqlite3
+sessions.db
+users.db
+
+# Logs
+*.log
+server*.out.log
+server*.err.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Backups and local tooling
+backups/
+*.backup*
+server.js.backup*
+.codex/
+.agents/
+.tmp-*/
+
+# Expo / React Native / Android builds
+routehub-app/.expo/
+routehub-app/dist/
+routehub-app/web-build/
+routehub-app/artifacts/
+routehub-app/expo-metro*.log
+routehub-app/metro-*.log
+routehub-app/android/.gradle/
+routehub-app/android/.kotlin/
+routehub-app/android/build/
+routehub-app/android/app/build/
+routehub-app/android/app/.cxx/
+routehub-app/android/app/debug.keystore
+routehub-app/android/app/src/main/assets/dgissdk.key
+routehub-app/native-keys/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Accidental Android runtime/cache files
+routehub-app/okhttp3.*

@@ -1,4 +1,4 @@
-document.querySelectorAll(".upload-box input").forEach((input) => {
+﻿document.querySelectorAll(".upload-box input").forEach((input) => {
   input.addEventListener("change", function () {
     if (this.files && this.files[0]) {
       const box = this.closest(".upload-box");

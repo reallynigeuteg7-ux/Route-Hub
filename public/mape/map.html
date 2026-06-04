@@ -1,75 +1,228 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Карта грузов — ROUTE HUB</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Карта грузов — Route Hub</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
 
-  <header class="navbar">
+  <!-- 2GIS MapGL -->
+  <script src="https://mapgl.2gis.com/api/js"></script>
+
+  <link rel="stylesheet" href="style.css?v=20260531-legal-footer">
+
+  
+</head>
+
+<body>
+  <!-- Background -->
+  <div class="bg" aria-hidden="true">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="grid"></div>
+    <div class="noise"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="navbar" id="navbar">
     <div class="container nav-inner">
-      <div class="logo">
-        <a href="../index.html">
-          <img src="https://i.ibb.co.com/GvcSrYbs/1-edited-free-carve-photos-1.png" alt="logo">
-        </a>
-      </div>  
-      
-      <nav class="menu">
+      <a class="brand" href="../index.html" aria-label="Route Hub">
+        <img class="brand-logo" src="../images/logo.png" alt="Route Hub">
+        <span class="brand-name"></span>
+      </a>
+
+      <nav class="menu" aria-label="Основное меню">
         <a href="../about(test)/about.html">О нас</a>
         <a href="../newspage/index.html">Новости</a>
-        <a href="../mape/map.html">Карта грузов</a>
-        <a href="../stats(test)/statss.html">Статистика</a>
-      </nav>
+        <a class="is-active" href="../mape/map.html">Карта грузов</a>
+</nav>
 
-      <div id="auth-container">
-        <a href="../login.html"><button class="signup">Авторизация</button></a>
-      </div>
+      <div class="nav-actions">
+        <div id="auth-container">
+          <a class="nav-auth-link" href="../login.html">
+            <button class="btn btn-sm btn-light" type="button">Авторизация</button>
+          </a>
+        </div>
 
-      <div class="burger" id="burger">
-        <span></span><span></span><span></span>
+        <button class="burger" id="burger" aria-label="Открыть меню" aria-expanded="false" aria-controls="mobileMenu" type="button">
+          <span></span><span></span><span></span>
+        </button>
       </div>
 
       <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-top">
+          <div class="mobile-title">Меню</div>
+          <button class="mobile-close" id="mobileClose" aria-label="Закрыть меню" type="button">✕</button>
+        </div>
+
         <a href="../about(test)/about.html">О нас</a>
         <a href="../newspage/index.html">Новости</a>
-        <a href="../mape/map.html">Карта грузов</a>
-        <a href="../stats(test)/statss.html">Статистика</a>
+        <a class="is-active" href="../mape/map.html">Карта грузов</a>
+<div class="mobile-divider"></div>
+
         <div id="auth-container-mobile">
-          <a href="../login.html"><button class="signup">Авторизация</button></a>
+          <a class="nav-auth-link" href="../login.html">
+            <button class="btn btn-md btn-accent w-100" type="button">Авторизация</button>
+          </a>
         </div>
       </div>
     </div>
   </header>
 
-  <section class="page-hero container">
-    <h1>Карта грузов</h1>
-    <p>Просматривайте расположение грузов в реальном времени</p>
-
-  </section>
-  
-  <div class="container">
-    <div id="map"></div> 
-  </div>
-
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-left">© 2025 ROUTE HUB — все права защищены</div>
-      <div class="footer-nav">
-        <a href="../about(test)/about.html">О нас</a>
-        <a href="../newspage/index.html">Новости</a>
-        <a href="../mape/map.html">Карта грузов</a>
-        <a href="../stats(test)/statss.html">Статистика</a>
+  <!-- Page -->
+  <main class="wrap page">
+    <section class="hero">
+      <div>
+        <div class="tag"><span class="tag__dot"></span> Карта грузов</div>
+        <h1 class="h1">Находи грузы на карте быстро</h1>
+        <p class="lead">Фильтры, поиск по городу и список заявок рядом. Всё в одном окне.</p>
       </div>
+      <div class="hero__hint panel">
+        <div class="hint__t">Подсказка</div>
+        <div class="hint__d">Нажми по карточке груза справа — карта перелетит и подсветит точку.</div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <!-- MAP -->
+      <div class="panel mapwrap">
+        <div class="maphead">
+          <div class="maphead__l">
+            <div class="maphead__t">Карта</div>
+            <div class="maphead__s">2GIS MapGL + маршрут поездки</div>
+          </div>
+          <div class="maphead__r">
+            <button class="btn btn--ghost btn--sm" id="btnRecenter" type="button">В центр</button>
+          </div>
+        </div>
+        <div id="map" class="map"></div>
+      </div>
+
+      <!-- SIDEBAR -->
+      <aside class="panel side">
+        <div class="side__top">
+          <div>
+            <div class="side__t">Фильтры</div>
+            <div class="side__s">Настрой выдачу под себя</div>
+          </div>
+          <button class="btn btn--ghost btn--sm" id="btnRefresh" type="button">Обновить</button>
+        </div>
+
+        <div class="filters">
+          <label class="field">
+            <span class="field__l">Тип груза</span>
+            <select id="filterType" class="field__c">
+              <option value="">Любой</option>
+              <option value="Тент">Тент</option>
+              <option value="Реф">Реф</option>
+              <option value="Контейнер">Контейнер</option>
+              <option value="Самосвал">Самосвал</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="field__l">Мин. вес (т)</span>
+            <input id="filterWeight" class="field__c" type="number" min="0" step="0.1" placeholder="Напр. 5">
+          </label>
+
+          <label class="field">
+            <span class="field__l">Город / населённый пункт</span>
+            <input id="citySearch" class="field__c" type="text" placeholder="Напр. Актобе">
+          </label>
+
+          <button class="btn btn--accent" id="applyFilters" type="button">Применить</button>
+        </div>
+
+        <div class="side__hr"></div>
+
+        <section class="route-panel">
+          <div class="route-panel__head">
+            <div>
+              <div class="side__t">Поездка</div>
+              <div class="side__s">Выбери груз и запусти тест маршрута</div>
+            </div>
+            <span class="route-status route-status--idle" id="tripStatus">Ожидание</span>
+          </div>
+
+          <div class="route-panel__empty" id="routeEmptyState">
+            Нажми на карточку груза или маркер на карте, чтобы построить маршрут.
+          </div>
+
+          <div class="route-panel__body" id="routeDetails" hidden>
+            <div class="route-panel__title" id="routeTitle">Маршрут не выбран</div>
+            <div class="route-panel__meta" id="routeMeta"></div>
+            <div class="route-panel__info" id="routeInfo"></div>
+            <div class="route-panel__actions">
+              <button class="btn btn--accent" id="btnBuildRoute" type="button">Построить маршрут</button>
+              <button class="btn btn--ghost" id="btnStartTrip" type="button" disabled>В путь</button>
+              <button class="btn btn--ghost" id="btnStopTrip" type="button" disabled>Стоп</button>
+            </div>
+          </div>
+        </section>
+
+        <div class="side__hr"></div>
+
+        <div class="side__listHead">
+          <div class="side__t">Заявки</div>
+          <div class="badge" id="countBadge">0</div>
+        </div>
+
+        <div class="list" id="loadsList">
+          <div class="empty" id="emptyState">
+            <div class="empty__t">Пока пусто</div>
+            <div class="empty__d">Попробуй убрать фильтры или обновить.</div>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-logo-col">
+        <a class="footer-logo" href="../index.html" aria-label="RouteHub">
+          <img src="../images/logowhite.PNG" alt="RouteHub" />
+        </a>
+        <p>Рабочая платформа для грузовладельцев и перевозчиков по Казахстану.</p>
+        <div class="footer-legal">
+          <span>ТОО «RouteHub»</span>
+          <span>БИН: 260440042140</span>
+          <span>Республика Казахстан, г. Кызылорда, ул. Кушербаева 118</span>
+        </div>        <div class="footer-copy">© 2026 RouteHub. Все права защищены.</div>
+      </div>
+
+      <div class="footer-col footer-contact-col">
+        <h3>Контакты</h3>
+        <a class="footer-contact" href="mailto:info.routehub@gmail.com">
+          <span class="footer-contact-icon">@</span>
+          info.routehub@gmail.com
+        </a>
+        <a class="footer-contact" href="https://www.instagram.com/routehub.kz/" target="_blank" rel="noopener noreferrer">
+          <span class="footer-contact-icon">IG</span>
+          Instagram
+        </a>
+      </div>
+
+      <nav class="footer-col footer-links" aria-label="Навигация RouteHub">
+        <h3>RouteHub</h3>
+        <a href="../about(test)/about.html">О нас</a>
+        <a href="../page2/index2.html">Найти груз</a>
+        <a href="../page4/index.html">Добавить груз</a>
+        <a href="../mape/map.html">Карта грузов</a>
+      </nav>
+
+      <nav class="footer-col footer-links" aria-label="Документы RouteHub">
+        <h3>Документы</h3>
+        <a href="../privacy.html">Политика конфиденциальности</a>
+        <a href="../terms.html">Условия использования</a>
+        <a href="../newspage/index.html">Новости</a>
+      </nav>
     </div>
   </footer>
 
-  <script src="script.js"></script>
+  <script src="script.js?v=20260504-1"></script>
 </body>
 </html>

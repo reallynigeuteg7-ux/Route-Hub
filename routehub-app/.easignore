@@ -1,0 +1,21 @@
+.git
+.expo
+node_modules
+dist
+web-build
+
+# Local-only secrets and caches
+native-keys
+.env
+.env.*
+
+# Local Android machine config
+android/local.properties
+
+# Build outputs and caches
+android/.gradle
+android/app/build
+android/build
+android/.kotlin
+android/**/.cxx
+android/**/build

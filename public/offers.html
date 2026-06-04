@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Предложения по грузу</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+<style>
+:root{
+  --bg: #0b1220;
+  --card: rgba(17, 24, 39, 0.88);
+  --card-2: rgba(255,255,255,0.04);
+  --line: rgba(255,255,255,0.10);
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --accent: #22c55e;
+  --accent-2: #3b82f6;
+  --info: #0ea5e9;
+  --shadow-lg: 0 20px 45px rgba(0,0,0,0.28);
+}
+
+*{
+  box-sizing: border-box;
+}
+
+html, body{
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(34,197,94,0.12), transparent 30%),
+    radial-gradient(circle at top right, rgba(59,130,246,0.10), transparent 26%),
+    linear-gradient(180deg, #08111f 0%, #0b1220 100%);
+  color: var(--text);
+  font-family: Montserrat, sans-serif;
+}
+
+.wrap {
+  width: min(980px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 42px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.wrap h1{
+  margin: 0 0 8px;
+  font-size: clamp(28px, 3vw, 38px);
+  line-height: 1.1;
+  text-align: center;
+}
+
+#subtitle{
+  opacity: 1 !important;
+  color: var(--muted);
+  margin-bottom: 20px !important;
+  text-align: center;
+  line-height: 1.5;
+}
+
+#offersList {
+  width: 100%;
+  max-width: 820px;
+}
+
+/* Карточка отклика */
+.offer-card {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 22px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+/* Текст внутри карточек */
+.offer-card h2,
+.offer-card h3,
+.offer-card h4,
+.offer-card p,
+.offer-card div,
+.offer-card span {
+  word-break: break-word;
+}
+
+.offer-card h3 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+.offer-card p {
+  margin: 6px 0;
+  color: var(--muted);
+  line-height: 1.55;
+  font-size: 14px;
+}
+
+.offer-card strong,
+.offer-card b {
+  color: var(--text);
+}
+
+.offer-card .price,
+.offer-card .amount {
+  display: inline-block;
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.1;
+}
+
+.offer-card .status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Универсальные ряды, если JS кладёт блоки в flex/grid */
+.offer-card .row,
+.offer-card .top,
+.offer-card .meta,
+.offer-card .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Кнопки */
+button,
+.btn,
+.btn-chat {
+  min-height: 44px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  padding: 10px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease, border-color .16s ease, background .16s ease;
+}
+
+button:hover,
+.btn:hover,
+.btn-chat:hover {
+  transform: translateY(-1px);
+}
+
+.btn-chat {
+  background: linear-gradient(135deg, var(--info), #0284c7);
+  color: white;
+  border: none;
+  box-shadow: 0 10px 24px rgba(14,165,233,0.22);
+}
+
+.btn-chat:hover {
+  background: linear-gradient(135deg, #38bdf8, #0284c7);
+}
+
+/* Если в будущем есть вторичные кнопки */
+.btn-outline {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+
+.btn-outline:hover {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.18);
+}
+
+/* Пустое состояние */
+#offersList:empty::before {
+  content: "Нет откликов";
+  display: block;
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Если JS вставляет просто текст "Загрузка..." */
+#offersList {
+  color: var(--text);
+}
+
+/* Мобильная адаптация */
+@media (max-width: 760px) {
+  .wrap {
+    width: min(100% - 20px, 100%);
+    padding: 18px 0 28px;
+  }
+
+  .offer-card {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .offer-card .row,
+  .offer-card .top,
+  .offer-card .meta,
+  .offer-card .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  button,
+  .btn,
+  .btn-chat {
+    width: 100%;
+    min-height: 46px;
+  }
+}
+
+.btn-accept {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  border: none;
+  box-shadow: 0 10px 24px rgba(34,197,94,0.22);
+}
+
+.btn-accept:hover {
+  background: linear-gradient(135deg, #34d399, #16a34a);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.status-pending {
+  background: rgba(255,255,255,0.06);
+  color: #cbd5e1;
+}
+
+.status-accepted {
+  background: rgba(34,197,94,0.14);
+  color: #86efac;
+}
+
+.status-rejected {
+  background: rgba(239,68,68,0.12);
+  color: #fca5a5;
+}
+
+.offer-card {
+  width: 100%;
+  padding: 18px;
+  border-radius: 18px;
+  box-sizing: border-box;
+}
+
+.offer-layout {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.offer-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.offer-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.offer-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.offer-line {
+  color: #94a3b8;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.offer-line b {
+  color: #fff;
+}
+
+.offer-label {
+  color: #94a3b8;
+  margin-right: 6px;
+}
+
+.offer-line-comment {
+  margin-top: 4px;
+}
+
+.offer-actions {
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.offer-actions button {
+  width: 100%;
+}
+
+@media (max-width: 760px) {
+  .wrap {
+    width: calc(100% - 20px);
+    padding: 16px 0 24px;
+  }
+
+  .offer-card {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .offer-layout {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .offer-main {
+    width: 100%;
+  }
+
+  .offer-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .price {
+    font-size: 22px !important;
+    line-height: 1.1;
+  }
+
+  .status {
+    white-space: normal;
+  }
+
+  .offer-meta {
+    gap: 10px;
+  }
+
+  .offer-line {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .offer-actions {
+    width: 100%;
+  }
+
+  .offer-actions button {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .wrap {
+    width: calc(100% - 16px);
+  }
+
+  .offer-card {
+    padding: 12px;
+  }
+
+  .price {
+    font-size: 20px !important;
+  }
+
+  .offer-line {
+    font-size: 12.5px;
+  }
+}
+
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>Предложения по грузу</h1>
+  <div id="subtitle" style="opacity:.7; margin-bottom:14px;"></div>
+  <div id="offersList">Загрузка...</div>
+</div>
+
+
+
+
+
+<script src="offers.js?v=20260506-3"></script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Детали груза | Logistics App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style-card.css">
+    <script src="https://mapgl.2gis.com/api/js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="back-link">
+            <a href="index2.html"><i class="fas fa-arrow-left"></i> Назад к поиску</a>
+        </div>
+
+        <div class="load-grid">
+            <main class="load-main">
+                <div class="card header-card">
+                    <div class="route-header">
+                        <div class="route-title">
+                            <span class="load-id">Груз #<span id="load-id">--</span></span>
+                            <h1 id="route-text">Загрузка маршрута...</h1>
+                            <p class="post-date"><i class="far fa-calendar-alt"></i> Дата публикации: <span id="load-date">--</span></p>
+                        </div>
+                        <div class="price-block">
+                            <span id="load-price">0</span> <small>₸</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card specs-card">
+                    <h3><i class="fas fa-info-circle"></i> Параметры груза</h3>
+                    <div class="specs-grid">
+                        <div class="spec-item">
+                            <span class="label">Тип кузова</span>
+                            <span class="value" id="load-type">--</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="label">Вес</span>
+                            <span class="value" id="load-weight">-- т</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="label">Объем</span>
+                            <span class="value" id="load-volume">-- м³</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="label">Габариты (Д×Ш×В)</span>
+                            <span class="value" id="load-dims">--</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="label">Тип погрузки</span>
+                            <span class="value" id="load-loading-type">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card desc-card">
+                    <h3><i class="fas fa-align-left"></i> Дополнительная информация</h3>
+                    <p id="load-description">Описание загружается...</p>
+                </div>
+
+                <div class="card map-card">
+                    <h3><i class="fas fa-map-marker-alt"></i> Местоположение груза</h3>
+                    <p class="map-caption" id="map-caption">Показываем точку погрузки на карте 2ГИС.</p>
+                    <div id="map" class="map-box">
+                        <p class="map-placeholder">Карта загружается...</p>
+                    </div>
+                </div>
+            </main>
+
+            <aside class="load-sidebar">
+                <div class="card user-card">
+                    <div class="user-profile">
+                        <div class="avatar" id="user-avatar">?</div>
+                        <div class="user-meta">
+                            <h4 id="user-name">Загрузка...</h4>
+                            <span class="role-tag">Заказчик</span>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <i class="fas fa-phone-alt"></i>
+                            <div>
+                                <small>Контактный телефон</small>
+                                <p id="load-phone">Не указан</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button id="btn-offer" class="btn btn-primary">Предложить ставку</button>
+                        <button id="btn-message" class="btn btn-outline">Написать сообщение</button>
+                        <button class="btn btn-favorite"><i class="far fa-star"></i> В избранное</button> 
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+<script src="../firebase-chat.js"></script>
+<script src="script-card.js"></script>
+
+</body>
+</html>

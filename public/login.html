@@ -1,87 +1,67 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Авторизация — Route Hub</title>
-  <link rel="stylesheet" href="log.css">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
- 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RouteHub — Авторизация</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="log.css">
 </head>
 <body>
 
-<header class="navbar">
-  <div class="container nav-inner">
-  
- 
-  </div>
-</header>
+    <div class="auth-wrapper">
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="logo-area">
+                    <a href="./index.html">
+                    <img src="../images/logo2.png" alt="logo" class="logo">
+                    </a>
+                    <span class="logo-name">RouteHub</span>
+                </div>
 
-<main class="login-page">
-  <div class="login-card" id="card">
+                <h2 id="card-title">Вход в аккаунт</h2>
+                <p class="switch-mode" id="toggle-text">Нет аккаунта? <a href="#" id="toggle-register">Регистрация</a></p>
 
-     <a href="index.html">
-    <img class="log2" src="https://i.ibb.co/GvcSrYbs/1-edited-free-carve-photos-1.png" alt="logo">
-       </a>
-       
-    <h2 id="card-title">Вход в аккаунт</h2>
-    <p class="subtitle">Добро пожаловать на Route Hub</p>
+                <form id="login-form" class="auth-form">
+                    <input id="login-email" type="email" placeholder="Email" required>
+                    <input id="login-password" type="password" placeholder="Пароль" required>
+                    <input type="hidden" id="csrf" name="csrf">
+                    <button type="submit" class="btn-start">Войти</button>
+                    <a href="forgot-password.html" id="forgot" style="display: block; margin-top: 15px; font-size: 13px; color: #666; text-decoration: none;">Забыли пароль?</a>
+                </form>
 
-    <!-- Вставим скрытое поле csrf через JS -->
+                <form id="register-form" class="auth-form" style="display:none;">
+                    <input id="reg-name" type="text" placeholder="Имя или Название компании" required>
+                    <input id="reg-email" type="email" placeholder="Email" required>    
+                    <input id="reg-email-code" type="text" inputmode="numeric" maxlength="6" placeholder="Код из email" style="display:none;">
+                    <input id="reg-password" type="password" placeholder="Пароль" required>
+                    <input id="reg-phone" type="tel" placeholder="+7 (___) ___-__-__" required>
+                    <select id="reg-role" style="width: 100%; background: #f0f0e8; border: none; border-radius: 15px; padding: 16px 18px; margin-bottom: 12px; font-size: 15px; outline: none; font-family: inherit;">
+                        <option value="client">Я Грузовладелец</option>
+                        <option value="carrier">Я Перевозчик</option>
+                    </select>
+                    <label class="agree-row">
+  <input id="reg-agree" type="checkbox" required>
+  <span>
+    Я согласен(на) с
+    <a href="terms.html" target="_blank" rel="noopener">условиями</a>
+    и
+    <a href="privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a>
+  </span>
+</label>
 
-    <form id="login-form" class="login-form">
-      <input id="login-email" type="email" placeholder="Email" required>
-      <input id="login-password" type="password" placeholder="Пароль" required>
-      <input type="hidden" id="csrf" name="csrf">
-      <button type="submit" class="btn-submit">Войти</button>
-    
-    </form>
+                    <button id="reg-submit" type="submit" class="btn-start">Зарегистрироваться</button>
+                </form>
 
-   <form id="register-form" class="login-form" style="display:none;">
-  <input id="reg-name" type="text" placeholder="Имя или Название компании">
-  <input id="reg-email" type="email" placeholder="Email" required>    
-  <input id="reg-password" type="password" placeholder="Пароль" required>
-  <input id="reg-phone" type="tel" placeholder="+7 (___) ___-__-__" required>
-  
-  <select id="reg-role" style="width: 91%; padding: 14px; margin-bottom: 14px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.18); background: rgba(255, 255, 255, 0.07); color: white; outline: none; font-family: Montserrat">
-    <option value="client" style="color: black; font-family: Montserrat">Я Грузовладелец</option>
-    <option value="carrier" style="color: black; font-family: Montserrat">Я Перевозчик</option>
-  </select>
+                <div id="msg" style="margin-top:12px; color:#ff4d4d; font-size: 13px;"></div>
+            </div>
 
-  <button type="submit" class="btn-submit">Зарегистрироваться</button>
-</form>
-
-    <div class="links">
-      <a href="#" id="toggle-register">Нет аккаунта? Регистрация</a>
-      <a href="#" id="forgot">Забыли пароль?</a>
+            <div class="auth-visual">
+                <h2 class="bigfo">ROUTEHUB</h2>
+            </div>
+        </div>
     </div>
 
-    <div id="msg" style="margin-top:12px;color:#ffb3b3;"></div>
-  </div>
-</main>
-
-<footer class="footer">© 2025 Route Hub — все права защищены</footer>
-
-<div id="otp-modal" class="modal">
-  <div class="modal-content">
-    <h3>Подтверждение номера</h3>
-    <p>Мы отправили SMS с кодом на ваш номер</p>
-    <input type="text" id="otp-code" placeholder="000000" maxlength="6">
-    <div class="modal-buttons">
-      <button id="btn-verify" class="btn-submit">Подтвердить</button>
-      <button id="btn-cancel" class="btn-cancel">Отмена</button>
-    </div>
-  </div>
-</div>
-
-<script src="loginscript.js"></script>
-
- <div id="recaptcha-container"></div>
-
+    <script src="loginscript.js"></script>
 </body>
 </html>

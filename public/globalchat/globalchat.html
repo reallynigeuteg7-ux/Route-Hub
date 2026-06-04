@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RouteHub Chat</title>
+    <link rel="stylesheet" href="globalchat.css?v=20260504-2">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100..900&display=swap" rel="stylesheet">
+</head>
+<body>
+    
+<div class="app-container">
+  <aside class="sidebar">
+  <div class="sidebar-header">
+    <a href="../index.html" class="logo-link">
+      <img class="logo" src="../images/logo2.png" alt="RouteHub logo">
+    </a>
+
+    <div class="user-profile">
+      <span class="user-label">Вы вошли как</span>
+      <span id="current-user-name">Загрузка...</span>
+    </div>
+  </div>
+
+  <div class="chat-list" id="chat-list">
+    <div class="chat-item active" data-room="global">
+      <div class="avatar">RH</div>
+      <div class="chat-info">
+        <span class="chat-name">Глобальный чат</span>
+        <div>Общий чат RouteHub</div>
+      </div>
+    </div>
+  </div>
+</aside> 
+
+    <main class="main-chat">
+      <header class="chat-header">
+  <div class="user-meta">
+    <button id="menu-toggle" class="mobile-menu-btn" type="button">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+        <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
+      </svg>
+    </button>
+
+    <div class="chat-header-title">
+      <h3>RouteHub Global</h3>
+      <span id="user-count">В сети: ...</span>
+    </div>
+  </div>
+</header>
+        <div id="chat-messages" class="messages-area">
+            </div>
+
+        <form id="chat-form">
+            <div class="chat-input-area">
+                <label class="file-upload-label" for="file-input">
+                    <input type="file" id="file-input" style="display: none;">
+                    <span class="upload-icon">+</span>
+                </label>
+                <input type="text" placeholder="Напишите сообщение..." id="chat-input" autocomplete="off">
+                <button type="submit" id="send-btn">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+                    </svg>
+                </button>
+            </div>
+        </form>
+    </main>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script src="globalscript.js?v=20260504-2"></script>
+
+
+</body>
+</html>

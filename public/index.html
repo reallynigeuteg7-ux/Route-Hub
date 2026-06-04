@@ -1,206 +1,245 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Route Hub</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Raleway:wght@400;700&display=swap" rel="stylesheet">
+  <title>RouteHub - найти груз для перевозки по Казахстану</title>
+  <meta name="description" content="RouteHub помогает быстро найти груз для перевозки, подобрать перевозчика и работать с заявками по Казахстану и СНГ." />
+  <meta name="keywords" content="найти груз, груз, поиск грузов, грузы для перевозки, грузоперевозки Казахстан, RouteHub" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="RouteHub - найти груз для перевозки" />
+  <meta property="og:description" content="Маркетплейс грузоперевозок: поиск грузов, перевозчиков и заявок по Казахстану и СНГ." />
+  <meta property="og:image" content="/images/logo.png" />
+  <link rel="stylesheet" href="style.css?v=20260531-legal-footer" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "RouteHub",
+    "url": "/",
+    "logo": "/images/logo.png",
+    "description": "Платформа для поиска грузов и перевозчиков по Казахстану и СНГ."
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "RouteHub",
+    "url": "/",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "/page2/index2.html?from={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
 </head>
-
 <body>
-
-<header class="navbar">
-  <div class="container nav-inner">
-    <div class="logo">
-      <a href="index.html">
-        <img src="https://i.ibb.co/GvcSrYbs/1-edited-free-carve-photos-1.png" alt="RouteHub">
+  <header class="navbar" id="navbar">
+    <div class="container nav-inner">
+      <a class="brand" href="index.html" aria-label="RouteHub">
+        <img class="brand-logo" src="images/logo.png" alt="RouteHub" />
       </a>
-    </div>
 
-    <nav class="menu">
-      <a href="about(test)/about.html">О нас</a>
-      <a href="newspage/index.html">Новости</a>
-      <a href="mape/map.html">Карта грузов</a>
-      <a href="stats(test)/statss.html">Статистика</a>
-    </nav>
+      <nav class="menu" aria-label="Основное меню">
+        <a href="about(test)/about.html">О нас</a>
+        <a href="newspage/index.html">Новости</a>
+        <a href="mape/map.html">Карта грузов</a>
+</nav>
 
-    <div id="auth-container">
-    <a href="login.html">
-      <button class="signup">Авторизация</button>
-    </a>
-    </div>
-
-    <div class="burger" id="burger">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
-
-    <div class="mobile-menu" id="mobileMenu">
-      <a href="about(test)/about.html">О нас</a>
-      <a href="newspage/index.html">Новости</a>
-      <a href="mape/map.html">Карта грузов</a>
-      <a href="stats(test)/statss.html">Статистика</a>
-      
-      <div id="auth-container-mobile">
-      <a href="login.html" class="signup-mobile">
-         <button class="signup">Авторизация</button>
-      </a>
+      <div class="nav-actions">
+        <div id="auth-container">
+          <a class="nav-auth-link" href="login.html"><button class="btn btn-sm btn-light" type="button">Авторизация</button></a>
+        </div>
+        <button class="burger" id="burger" aria-label="Открыть меню" aria-expanded="false" aria-controls="mobileMenu" type="button"><span></span><span></span><span></span></button>
       </div>
 
+      <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-top">
+          <div class="mobile-title">Меню</div>
+          <button class="mobile-close" id="mobileClose" aria-label="Закрыть меню" type="button">x</button>
+        </div>
+        <a href="about(test)/about.html">О нас</a>
+        <a href="newspage/index.html">Новости</a>
+        <a href="mape/map.html">Карта грузов</a>
+<div class="mobile-divider"></div>
+        <div id="auth-container-mobile">
+          <a class="nav-auth-link" href="login.html"><button class="btn btn-md btn-accent w-100" type="button">Авторизация</button></a>
+        </div>
+      </div>
     </div>
-
-  </div>
-</header>
-
-
-  <hr class="divider">
+  </header>
 
   <main>
     <section class="hero">
-      <div class="hero-overlay"></div>
-
-      <div class="container hero-inner">
-        <h1>Крупнейшая международная<br>Биржа грузоперевозок</h1>
-        <p class="subtitle">Помогаем перевозчикам и грузоотправителям найти друг друга и договориться о перевозке</p>
-        <div class="buttons">
-          <a class="btn primary" href="Page4/index.html">Для грузовладельцев</a>
-           <a class="btn primary" href="page2(MobAdapTrue)/index2.html">Для перевозчиков</a>
-          
-        </div>
-      </div>
-
-    </section>
-
-    <section class="stats container">
-      <div class="card">
-        <div class="card-icon">📦</div>
-        <h3>200 000 грузов</h3>
-        <p>ежедневно ждут откликов от перевозчиков</p>
-      </div>
-      <div class="card">
-        <div class="card-icon">🚚</div>
-        <h3>100 000 машин</h3>
-        <p>ежедневно готовы к перевозке</p>
-      </div>
-      <div class="card">
-        <div class="card-icon">👥</div>
-        <h3>300 000 участников</h3>
-        <p>ежедневно работают на платформе</p>
-      </div>
-    </section>
-
-    <section class="features container">
-      <h2 class="features-title">Находите партнёров на RH</h2>
-
-      <div class="features-grid">
-        <div class="feature-card">
-          <h3>Безопасно</h3>
-          <ul>
-            <li>Паспорт участника RH отражает его репутацию.</li>
-            <li>Рейтинг RH помогает найти лучших участников.</li>
-            <li>GPS-мониторинг грузов в реальном времени.</li>
-          </ul>
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <div class="hero-label">RouteHub для грузоперевозок</div>
+          <h1>Найти груз. Выбрать перевозчика. Закрыть рейс.</h1>
+          <p>Рабочая платформа для логистики по Казахстану: заявки, маршруты, ставки, карта грузов и связь между сторонами без хаоса в звонках.</p>
+          <div class="hero-actions">
+            <a class="btn btn-lg btn-accent" id="btn-client" href="#">Добавить груз</a>
+            <a class="btn btn-lg btn-dark" href="page2/index2.html">Найти груз</a>
+          </div>
         </div>
 
-        <div class="feature-card">
-          <h3>Удобно</h3>
-          <ul>
-            <li>Мобильные приложения для Android и iOS.</li>
-            <li>Электронные документы и обмен ими.</li>
-            <li>Один раз вводите данные — и всё.</li>
-          </ul>
-        </div>
+        <div class="dashboard" id="loads-dashboard" aria-label="Свежие грузы RouteHub">
+          <div class="dash-top">
+            <div>
+              <span>Сегодня</span>
+              <strong>Свежие грузы</strong>
+            </div>
+            <div class="dash-live">live</div>
+          </div>
 
-        <div class="feature-card">
-          <h3>Бесплатно</h3>
-          <ul>
-            <li>Регистрация.</li>
-            <li>Добавление грузов и транспорта.</li>
-            <li>Поиск грузов и транспорта.</li>
-          </ul>
-        </div>
+          <a class="route-card route-card-main route-card-loading" id="dashboard-main-load" href="page2/index2.html">
+            <div class="route-head"><span>Загрузка грузов</span><b>RouteHub</b></div>
+            <div class="route-line"><strong>Откуда</strong><i></i><strong>Куда</strong></div>
+            <div class="route-meta"><span>Ищем актуальные заявки</span></div>
+          </a>
 
-        <div class="feature-card">
-          <h3>Просто</h3>
-          <ul>
-            <li>Представитель в Казахстане поможет начать.</li>
-            <li>Понятные инструкции и форум.</li>
-            <li>Поддержка 24/7.</li>
-          </ul>
+          <div class="dash-split">
+            <div class="mini-list">
+              <div class="mini-title">Новые заявки</div>
+              <div id="dashboard-load-list">
+                <div class="mini-row"><b>Загружаем реальные грузы...</b><span>...</span></div>
+              </div>
+            </div>
+            <div class="metric-stack">
+              <div><span>Активных</span><b id="dashboard-load-count">0</b></div>
+              <div><span>Маршруты</span><b>KZ</b></div>
+            </div>
+          </div>
+
+          <div class="dash-bottom">
+            <span></span>
+            <p id="dashboard-load-note">Заявки RouteHub обновляются автоматически</p>
+          </div>
         </div>
       </div>
     </section>
 
-    </div>
+    <section class="stats">
+      <div class="container stats-grid">
+        <div class="stat-card"><div class="stat-icon"><img class="iconss" src="images/loads.png" alt="Грузы" /></div><div class="stat-num" data-count="0" data-stat-key="activeLoads">0</div><div class="stat-title">активных грузов</div><div class="stat-sub">открытые и назначенные заявки</div></div>
+        <div class="stat-card"><div class="stat-icon"><img class="iconss" src="images/machine.png" alt="Перевозчики" /></div><div class="stat-num" data-count="0" data-stat-key="carriers">0</div><div class="stat-title">перевозчиков</div><div class="stat-sub">зарегистрированы в системе</div></div>
+        <div class="stat-card"><div class="stat-icon"><img class="iconshumans" src="images/humanss.png" alt="Участники" /></div><div class="stat-num" data-count="0" data-stat-key="totalUsers">0</div><div class="stat-title">участников</div><div class="stat-sub">аккаунты RouteHub</div></div>
+      </div>
+    </section>
 
+    <section class="finder" id="find-cargo">
+      <div class="container finder-grid">
+        <div class="finder-copy">
+          <span class="section-label">SEO / поиск грузов</span>
+          <h2>Найти груз для перевозки</h2>
+          <p>RouteHub помогает перевозчикам находить актуальные грузы по Казахстану и СНГ. Ищите грузы по маршруту, дате, весу, типу кузова и направлению.</p>
+          <div class="finder-actions">
+            <a class="btn btn-lg btn-accent" href="page2/index2.html">Открыть поиск</a>
+            <a class="btn btn-lg btn-dark" href="mape/map.html">Карта грузов</a>
+          </div>
+        </div>
+        <div class="route-links" aria-label="Популярные направления поиска грузов">
+          <a href="page2/index2.html">Грузы Алматы - Астана</a>
+          <a href="page2/index2.html">Грузы Астана - Караганда</a>
+          <a href="page2/index2.html">Грузы Алматы - Шымкент</a>
+          <a href="page2/index2.html">Грузы Актобе - Алматы</a>
+          <a href="page2/index2.html">Грузы Караганда - Алматы</a>
+          <a href="page2/index2.html">Все грузы по Казахстану</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="container">
+        <div class="section-head">
+          <span class="section-label">Что внутри</span>
+          <h2>Не лендинг, а рабочий инструмент</h2>
+          <p>Главная сразу ведёт к действиям: создать груз, найти груз, открыть карту, проверить маршруты.</p>
+        </div>
+        <div class="features-grid">
+          <article class="feature"><div class="feature-ico"><img class="iconss" src="images/search.png" alt="Поиск" /></div><h3>Поиск</h3><p>Фильтры по маршруту, дате, весу и типу кузова.</p></article>
+          <article class="feature"><div class="feature-ico"><img class="iconss" src="images/zamok.png" alt="Надежность" /></div><h3>Доверие</h3><p>Профили, контакты и история помогают выбрать сторону.</p></article>
+          <article class="feature"><div class="feature-ico"><img class="iconss" src="images/speed.png" alt="Скорость" /></div><h3>Скорость</h3><p>Переход от заявки к откликам без лишних шагов.</p></article>
+          <article class="feature"><div class="feature-ico"><img class="iconss" src="images/ruka.png" alt="Сделка" /></div><h3>Сделка</h3><p>Чат, ставка и завершение перевозки в одной системе.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="process">
+      <div class="container process-grid">
+        <article><span>01</span><h3>Разместите</h3><p>Грузовладелец добавляет маршрут, параметры и цену.</p></article>
+        <article><span>02</span><h3>Сравните</h3><p>Перевозчики отправляют предложения по заявке.</p></article>
+        <article><span>03</span><h3>Везите</h3><p>Стороны согласуют детали и закрывают перевозку.</p></article>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="container cta-inner">
+        <div>
+          <span class="section-label">Старт</span>
+          <h2>Начните с груза или с поиска заявки</h2>
+          <p>RouteHub открывает рабочий сценарий за один клик.</p>
+        </div>
+        <div class="cta-actions">
+          <a class="btn btn-lg btn-accent" id="btn-client-cta" href="#">Я грузовладелец</a>
+          <a class="btn btn-lg btn-dark" href="page2/index2.html">Я перевозчик</a>
+        </div>
+      </div>
+    </section>
   </main>
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-logo-col">
+        <a class="footer-logo" href="index.html" aria-label="RouteHub">
+          <img src="images/logowhite.PNG" alt="RouteHub" />
+        </a>
+        <p>Рабочая платформа для грузовладельцев и перевозчиков по Казахстану.</p>
+        <div class="footer-legal">
+          <span>ТОО «RouteHub»</span>
+          <span>БИН: 260440042140</span>
+          <span>Республика Казахстан, г. Кызылорда, ул. Кушербаева 118</span>
+        </div>        <div class="footer-copy">© 2026 RouteHub. Все права защищены.</div>
+      </div>
 
-<footer class="site-footer">
-  <div class="container">
-    
-    <div class="footer-left">
-      © 2025 Route Hub — все права защищены
+      <div class="footer-col footer-contact-col">
+        <h3>Контакты</h3>
+        <a class="footer-contact" href="mailto:info.routehub@gmail.com">
+          <span class="footer-contact-icon">@</span>
+          info.routehub@gmail.com
+        </a>
+        <a class="footer-contact" href="https://www.instagram.com/routehub.kz/" target="_blank" rel="noopener noreferrer">
+          <span class="footer-contact-icon">IG</span>
+          Instagram
+        </a>
+      </div>
+
+      <nav class="footer-col footer-links" aria-label="Навигация RouteHub">
+        <h3>RouteHub</h3>
+        <a href="about(test)/about.html">О нас</a>
+        <a href="page2/index2.html">Найти груз</a>
+        <a href="page4/index.html">Добавить груз</a>
+        <a href="mape/map.html">Карта грузов</a>
+      </nav>
+
+      <nav class="footer-col footer-links" aria-label="Документы RouteHub">
+        <h3>Документы</h3>
+        <a href="privacy.html">Политика конфиденциальности</a>
+        <a href="terms.html">Условия использования</a>
+        <a href="newspage/index.html">Новости</a>
+      </nav>
     </div>
+  </footer>
 
-    <div class="footer-nav">
-      <a href="about(test)/about.html">О нас</a>
-      <a href="newspage/index.html"a>Новости</a>
-      <a href="mape/map.html">Карта</a>
-      <a href="stats(test)/statss.html">Статистика</a>
-    </div>
-
-  </div>
-</footer>
-
-  <script src="script.js"></script>
-
-
-<script>
-  // Функция для обновления шапки, если пользователь залогинен
-  async function updateNavbar() {
-    try {
-      const response = await fetch('/api/me'); // Спрашиваем у сервера данные профиля
-      
-      if (response.ok) {
-        const user = await response.json();
-        
-        // Код, который мы вставим вместо кнопок "Авторизация"
-    const userHtml = `
-  <div style="display: flex; align-items: center; gap: 15px;">
-    <span style="color: var(--text-primary); font-weight: 600; font-size: 14px; letter-spacing: 0.5px;">
-    <a href="profile.html">  ${user.name} </a>
-    </span>
-    <button onclick="logoutUser()" class="logout-btn">
-      Выйти
-    </button>
-  </div>
-`;
-
-        // Заменяем кнопки на имя и кнопку выхода в обоих местах
-        document.getElementById('auth-container').innerHTML = userHtml;
-        document.getElementById('auth-container-mobile').innerHTML = userHtml;
-      }
-    } catch (err) {
-      console.log('Пользователь не авторизован');
-    }
-  }
-
-  // Функция для выхода
-  async function logoutUser() {
-    await fetch('/api/logout', { method: 'POST' });
-    window.location.reload(); // Перезагружаем страницу, чтобы кнопки вернулись в исходный вид
-  }
-
-  // Запускаем проверку при загрузке страницы
-  document.addEventListener('DOMContentLoaded', updateNavbar);
-</script>
-
-
+  <a href="./globalchat/globalchat.html" class="floating-chat-link" title="Открыть чат" aria-label="Открыть чат">
+    <div class="chat-icon-wrapper"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg><span class="notification-badge"></span></div>
+  </a>
+  <div id="toast-container"></div>
+  <script src="script.js?v=20260504-1"></script>
 </body>
-  
 </html>

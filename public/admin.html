@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RouteHub Admin</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <main id="loginView" class="login-view" hidden>
+    <section class="login-card">
+      <div class="brand-row">
+        <img src="images/logo2.png" alt="RouteHub" class="brand-logo">
+        <div>
+          <div class="brand-name">RouteHub</div>
+          <div class="brand-subtitle">Admin</div>
+        </div>
+      </div>
+      <h1>Вход в админ-панель</h1>
+      <p>Доступ только для управления системой RouteHub.</p>
+      <form id="adminLoginForm" class="login-form">
+        <label>
+          Пароль администратора
+          <input id="adminPassword" type="password" autocomplete="current-password" required>
+        </label>
+        <button type="submit">Войти</button>
+      </form>
+      <div id="loginMessage" class="form-message"></div>
+    </section>
+  </main>
+
+  <main id="appView" class="admin-shell" hidden>
+    <header class="topbar">
+      <div class="topbar-brand">
+        <img src="images/logo2.png" alt="RouteHub" class="topbar-logo">
+        <div>
+          <h1>Админ-панель</h1>
+          <p>Грузы, ставки, счета, владельцы и перевозчики в одной системе.</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <span id="passwordWarning" class="password-warning" hidden>Используется временный пароль</span>
+        <button id="refreshBtn" class="btn btn-soft" type="button">Обновить</button>
+        <button id="logoutBtn" class="btn btn-outline" type="button">Выйти</button>
+      </div>
+    </header>
+
+    <section id="summaryGrid" class="summary-grid"></section>
+
+    <section class="admin-section">
+      <div class="section-head">
+        <div>
+          <h2>Грузы</h2>
+          <p>Ручное управление грузами, назначениями и возвратами.</p>
+        </div>
+      </div>
+
+      <section class="toolbar">
+        <label class="search-field">
+          Поиск
+          <input id="searchInput" type="search" placeholder="ID, город, владелец, перевозчик">
+        </label>
+        <label class="select-field">
+          Статус
+          <select id="statusFilter">
+            <option value="all">Все статусы</option>
+            <option value="open">Открытые</option>
+            <option value="assigned">Назначенные</option>
+            <option value="completed">Завершенные</option>
+            <option value="cancelled">Отмененные</option>
+            <option value="archived">Архив</option>
+          </select>
+        </label>
+      </section>
+
+      <section id="loadsGrid" class="loads-grid" aria-live="polite"></section>
+    </section>
+
+    <section class="admin-section topups-section">
+      <div class="section-head">
+        <div>
+          <h2>&#1047;&#1072;&#1103;&#1074;&#1082;&#1080; &#1085;&#1072; &#1087;&#1086;&#1087;&#1086;&#1083;&#1085;&#1077;&#1085;&#1080;&#1077;</h2>
+          <p>&#1055;&#1088;&#1086;&#1074;&#1077;&#1088;&#1082;&#1072; &#1082;&#1074;&#1080;&#1090;&#1072;&#1085;&#1094;&#1080;&#1081; &#1074;&#1088;&#1091;&#1095;&#1085;&#1091;&#1102;. &#1055;&#1086;&#1089;&#1083;&#1077; &#1087;&#1086;&#1076;&#1090;&#1074;&#1077;&#1088;&#1078;&#1076;&#1077;&#1085;&#1080;&#1103; &#1073;&#1072;&#1083;&#1072;&#1085;&#1089; &#1087;&#1086;&#1083;&#1100;&#1079;&#1086;&#1074;&#1072;&#1090;&#1077;&#1083;&#1103; &#1087;&#1086;&#1087;&#1086;&#1083;&#1085;&#1103;&#1077;&#1090;&#1089;&#1103;.</p>
+        </div>
+        <button id="refreshTopupsBtn" class="btn btn-soft" type="button">&#1054;&#1073;&#1085;&#1086;&#1074;&#1080;&#1090;&#1100; &#1079;&#1072;&#1103;&#1074;&#1082;&#1080;</button>
+      </div>
+      <section id="topupsGrid" class="topups-grid" aria-live="polite"></section>
+    </section>
+    <section class="admin-section withdraws-section">
+      <div class="section-head">
+        <div>
+          <h2>&#1047;&#1072;&#1103;&#1074;&#1082;&#1080; &#1085;&#1072; &#1074;&#1099;&#1074;&#1086;&#1076;</h2>
+          <p>&#1056;&#1091;&#1095;&#1085;&#1072;&#1103; &#1086;&#1073;&#1088;&#1072;&#1073;&#1086;&#1090;&#1082;&#1072; &#1074;&#1099;&#1074;&#1086;&#1076;&#1072; &#1089;&#1088;&#1077;&#1076;&#1089;&#1090;&#1074; &#1087;&#1086;&#1083;&#1100;&#1079;&#1086;&#1074;&#1072;&#1090;&#1077;&#1083;&#1077;&#1081;.</p>
+        </div>
+        <button id="refreshWithdrawsBtn" class="btn btn-soft" type="button">&#1054;&#1073;&#1085;&#1086;&#1074;&#1080;&#1090;&#1100; &#1074;&#1099;&#1074;&#1086;&#1076;&#1099;</button>
+      </div>
+      <section id="withdrawsGrid" class="topups-grid" aria-live="polite"></section>
+    </section>
+    <section class="admin-section finance-section">
+      <div class="section-head">
+        <div>
+          <h2>Финансы и счета</h2>
+          <p>Баланс, заморозка и ручные операции по кошелькам пользователей.</p>
+        </div>
+        <button id="refreshWalletsBtn" class="btn btn-soft" type="button">Обновить счета</button>
+      </div>
+      <section class="wallet-toolbar">
+        <label class="search-field">
+          Поиск по счетам
+          <input id="walletSearchInput" type="search" placeholder="Код, имя, email, телефон">
+        </label>
+      </section>
+      <section id="walletsGrid" class="wallets-grid" aria-live="polite"></section>
+    </section>
+  </main>
+
+  <aside id="detailsDrawer" class="details-drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <div>
+        <div class="eyebrow">Карточка груза</div>
+        <h2 id="drawerTitle">Груз</h2>
+      </div>
+      <button id="closeDrawerBtn" class="icon-btn" type="button" aria-label="Закрыть">×</button>
+    </div>
+    <div id="drawerContent" class="drawer-content"></div>
+  </aside>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="admin.js"></script>
+</body>
+</html>

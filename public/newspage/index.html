@@ -4,56 +4,69 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Новости — Route Hub</title>
-  <link rel="stylesheet" href="../style.css"> <link rel="stylesheet" href="style.css"> <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="style.css?v=20260531-legal-footer">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
 
-<header class="navbar">
+<header class="navbar" id="navbar">
   <div class="container nav-inner">
-    <div class="logo">
-      <a href="../index.html">
-        <img src="https://i.ibb.co/GvcSrYbs/1-edited-free-carve-photos-1.png" alt="RouteHub">
-      </a>
-    </div>
 
-    <nav class="menu">
+    <a class="brand" href="../index.html" aria-label="Route Hub">
+      <img class="brand-logo" src="../images/logo.png" alt="Route Hub">
+      <span class="brand-name"></span>
+    </a>
+
+    <nav class="menu" aria-label="Основное меню">
       <a href="../about(test)/about.html">О нас</a>
-      <a href="index.html" style="color: #2b8cff;">Новости</a>
+      <a class="is-active" href="index.html">Новости</a>
       <a href="../mape/map.html">Карта грузов</a>
-      <a href="../stats(test)/statss.html">Статистика</a>
-    </nav>
+</nav>
 
-    <div id="auth-container">
-      <a href="../login.html">
-      <button class="signup">Авторизация</button></a>
-    </div>
+    <div class="nav-actions">
+      <div id="auth-container">
+        <a class="nav-auth-link" href="../login.html">
+          <button class="btn btn-sm btn-light" type="button">Авторизация</button>
+        </a>
+      </div>
 
-    <div class="burger" id="burger">
-      <span></span><span></span><span></span>
+      <button class="burger" id="burger" aria-label="Открыть меню" aria-expanded="false" aria-controls="mobileMenu" type="button">
+        <span></span><span></span><span></span>
+      </button>
     </div>
 
     <div class="mobile-menu" id="mobileMenu">
+      <div class="mobile-top">
+        <div class="mobile-title">Меню</div>
+        <button class="mobile-close" id="mobileClose" aria-label="Закрыть меню" type="button">✕</button>
+      </div>
+
       <a href="../about(test)/about.html">О нас</a>
-      <a href="index.html">Новости</a>
+      <a class="is-active" href="index.html">Новости</a>
       <a href="../mape/map.html">Карта грузов</a>
-      <a href="../stats(test)/statss.html">Статистика</a>
+<div class="mobile-divider"></div>
+
       <div id="auth-container-mobile">
-        <a href="../login.html" class="signup-mobile"><button class="signup">Авторизация</button></a>
+        <a class="nav-auth-link" href="../login.html">
+          <button class="btn btn-md btn-accent w-100" type="button">Авторизация</button>
+        </a>
       </div>
     </div>
+
   </div>
 </header>
 
 <main class="news-page">
   <section class="container">
     <h1 class="page-title">Новости логистики</h1>
-    
+
     <div class="news-grid">
       <article class="news-card">
-        <div class="news-image" style="background-image: url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80');"></div>
+        <div class="news-image" style="background-image:url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80');"></div>
         <div class="news-content">
           <span class="news-date">22 мая, 2025</span>
           <h3>Запуск новых маршрутов через Центральную Азию</h3>
@@ -63,7 +76,7 @@
       </article>
 
       <article class="news-card">
-        <div class="news-image" style="background-image: url('https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&w=800&q=80');"></div>
+        <div class="news-image" style="background-image:url('https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&w=800&q=80');"></div>
         <div class="news-content">
           <span class="news-date">20 мая, 2025</span>
           <h3>Цифровизация документов на Route Hub</h3>
@@ -73,15 +86,17 @@
       </article>
 
       <article class="news-card">
-        <div class="news-image" style="background-image: url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=800&q=80');"></div>
+        <div class="news-image" style="background-image:url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=800&q=80');"></div>
         <div class="news-content">
           <span class="news-date">15 мая, 2025</span>
           <h3>Рейтинг надежности: новые критерии</h3>
           <p>Обновили алгоритм подсчета рейтинга. Узнайте, как повысить доверие к вашему профилю...</p>
           <a href="#" class="btn-read">Читать далее</a>
         </div>
-      </article> <article class="news-card wide-card">
-        <div class="card-image" style="background-image: url('https://images.unsplash.com/photo-1519003722824-194d4455a60c?q=80&w=2070&auto=format&fit=crop');"></div>
+      </article>
+
+      <article class="news-card wide-card">
+        <div class="card-image" style="background-image:url('https://images.unsplash.com/photo-1519003722824-194d4455a60c?q=80&w=2070&auto=format&fit=crop');"></div>
         <div class="card-body">
           <div class="card-meta">
             <span class="date">10 мая, 2025</span>
@@ -90,28 +105,58 @@
           <h3>Route Hub запускает программу поддержки молодых специалистов в IT-логистике</h3>
           <p>Мы открываем набор на оплачиваемую стажировку для разработчиков и аналитиков. Станьте частью команды, которая меняет рынок международных перевозок.</p>
           <div class="card-actions">
-             <a href="#" class="read-more">Узнать подробности</a>
-             <button class="logout-btn">Подать заявку</button>
+            <a href="#" class="read-more">Узнать подробности</a>
+            <button class="btn btn-sm btn-ghost" type="button">Подать заявку</button>
           </div>
         </div>
       </article>
 
-    </div> </section>
-</main>
-
-<footer class="site-footer">
-  <div class="container">
-    <div class="footer-left">© 2025 Route Hub — все права защищены</div>
-    <div class="footer-nav">
-      <a href="../about(test)/about.html">О нас</a>
-      <a href="index.html">Новости</a>
-      <a href="../mape/map.html">Карта</a>
-      <a href="../stats(test)/statss.html">Статистика</a>
     </div>
-  </div>
-</footer>
+  </section>
+</main>
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-logo-col">
+        <a class="footer-logo" href="../index.html" aria-label="RouteHub">
+          <img src="../images/logowhite.PNG" alt="RouteHub" />
+        </a>
+        <p>Рабочая платформа для грузовладельцев и перевозчиков по Казахстану.</p>
+        <div class="footer-legal">
+          <span>ТОО «RouteHub»</span>
+          <span>БИН: 260440042140</span>
+          <span>Республика Казахстан, г. Кызылорда, ул. Кушербаева 118</span>
+        </div>        <div class="footer-copy">© 2026 RouteHub. Все права защищены.</div>
+      </div>
 
-<script src="script.js"></script> 
+      <div class="footer-col footer-contact-col">
+        <h3>Контакты</h3>
+        <a class="footer-contact" href="mailto:info.routehub@gmail.com">
+          <span class="footer-contact-icon">@</span>
+          info.routehub@gmail.com
+        </a>
+        <a class="footer-contact" href="https://www.instagram.com/routehub.kz/" target="_blank" rel="noopener noreferrer">
+          <span class="footer-contact-icon">IG</span>
+          Instagram
+        </a>
+      </div>
 
+      <nav class="footer-col footer-links" aria-label="Навигация RouteHub">
+        <h3>RouteHub</h3>
+        <a href="../about(test)/about.html">О нас</a>
+        <a href="../page2/index2.html">Найти груз</a>
+        <a href="../page4/index.html">Добавить груз</a>
+        <a href="../mape/map.html">Карта грузов</a>
+      </nav>
+
+      <nav class="footer-col footer-links" aria-label="Документы RouteHub">
+        <h3>Документы</h3>
+        <a href="../privacy.html">Политика конфиденциальности</a>
+        <a href="../terms.html">Условия использования</a>
+        <a href="../newspage/index.html">Новости</a>
+      </nav>
+    </div>
+  </footer>
+
+<script src="script.js?v=20260504-1"></script>
 </body>
 </html>

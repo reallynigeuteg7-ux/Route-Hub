@@ -1,174 +1,199 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>О нас — QAZAQSTAN LOGISTICA</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>О нас — RouteHub</title>
+  <meta name="description" content="RouteHub — платформа для поиска грузов, перевозчиков, маршрутов и управления грузоперевозками в Казахстане." />
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=20260531-legal-footer" />
 </head>
 
 <body>
-
-  <header class="navbar">
+  <header class="navbar" id="navbar">
     <div class="container nav-inner">
-      <div class="logo">
-        <a href="../index.html">
-          <img src="https://i.ibb.co/GvcSrYbs/1-edited-free-carve-photos-1.png" alt="logo">
-        </a>
-      </div>
+      <a class="brand" href="../index.html" aria-label="RouteHub">
+        <img class="brand-logo" src="../images/logo.png" alt="RouteHub">
+      </a>
 
-      <nav class="menu">
-        <a href="../about(test)/about.html">О нас</a>
+      <nav class="menu" aria-label="Основное меню">
+        <a class="is-active" href="../about(test)/about.html">О нас</a>
         <a href="../newspage/index.html">Новости</a>
         <a href="../mape/map.html">Карта грузов</a>
-        <a href="../stats(test)/statss.html">Статистика</a>
-      </nav>
-<div id="auth-container">
-      <a href="../login.html">
-        <button class="signup">Авторизация</button>
-      </a>
-      </div>
+</nav>
 
-      <div class="burger" id="burger">
-        <span></span>
-        <span></span>
-        <span></span>
+      <div class="nav-actions">
+        <div id="auth-container">
+          <a class="nav-auth-link" href="../login.html">
+            <button class="btn btn-sm btn-light" type="button">Авторизация</button>
+          </a>
+        </div>
+
+        <button class="burger" id="burger" aria-label="Открыть меню" aria-expanded="false" aria-controls="mobileMenu" type="button">
+          <span></span><span></span><span></span>
+        </button>
       </div>
 
       <div class="mobile-menu" id="mobileMenu">
-        <a href="../about(test)/about.html">О нас</a>
+        <div class="mobile-top">
+          <div class="mobile-title">Меню</div>
+          <button class="mobile-close" id="mobileClose" aria-label="Закрыть меню" type="button">x</button>
+        </div>
+
+        <a class="is-active" href="../about(test)/about.html">О нас</a>
         <a href="../newspage/index.html">Новости</a>
         <a href="../mape/map.html">Карта грузов</a>
-        <a href="../stats(test)/statss.html">Статистика</a>
+<div class="mobile-divider"></div>
 
         <div id="auth-container-mobile">
-        <a href="../login.html" class="signup-mobile">
-          <button class="signup">Авторизация</button>
-        </a>
+          <a class="nav-auth-link" href="../login.html">
+            <button class="btn btn-md btn-accent w-100" type="button">Авторизация</button>
+          </a>
         </div>
       </div>
     </div>
   </header>
 
-
-  <section class="page-hero container">
-    <h1>О нашей компании</h1>
-    <p>Мы предоставляем качественные услуги в сфере логистики по всему Казахстану.</p>
-  </section>
-
-  <div class="container">
-    <div class="section">
-      <h2>Наша миссия</h2>
-      <p>Обеспечивать надежные и быстрые перевозки, внедряя современные технологии для эффективной доставки грузов нашим клиентам.</p>
-    </div>
-
-    <div class="section">
-      <h2>Наши ценности</h2>
-      <ul style="margin-top:20px; padding-left:20px; line-height:1.6;">
-        <li>Надежность и прозрачность</li>
-        <li>Инновации и технологии</li>
-        <li>Клиентоориентированность</li>
-        <li>Ответственность за груз</li>
-      </ul>
-    </div>
-
-    <div class="section">
-      <h2>Наша команда</h2>
-      <div class="team-grid">
-
-        <div class="team-card">
-          <h3>Утегенов Адильжан Галымжанович</h3>
-          <p>Frontend, UI/UX (Руководитель IT-отдела)</p>
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow">RouteHub logistics</div>
+          <h1>Одна рабочая система для грузов, маршрутов и перевозчиков</h1>
+          <p>RouteHub помогает грузовладельцам и перевозчикам быстрее находить друг друга, отправлять ставки, смотреть грузы на карте и вести перевозку без хаоса в звонках.</p>
+          <div class="hero-actions">
+            <a class="btn btn-lg btn-accent" href="../mape/map.html">Открыть карту грузов</a>
+            <a class="btn btn-lg btn-dark" href="../page2/index2.html">Найти груз</a>
+          </div>
         </div>
 
-        <div class="team-card">
-          <h3>Оразхожаева Бибіфатима </h3>
-          <p>Руководитель отдела медиа и SMM</p>
-        </div>
-
-        <div class="team-card">
-          <h3>Ерик Расул Ержанович</h3>
-          <p>CEO</p>
-        </div>
-
-        <div class="team-card">
-          <h3>Мухамбеткалиев Али</h3>
-          <p>Руководитель отдела медиа и SMM</p>
-        </div>
-
-        <div class="team-card">
-          <h3>Туралив Баглан</h3>
-          <p>Генеральный Директор компаний</p>
-        </div>
-
+        <aside class="hero-panel" aria-label="RouteHub в цифрах">
+          <div class="panel-top">
+            <span>Платформа</span>
+            <strong>RouteHub</strong>
+          </div>
+          <div class="route-preview">
+            <div>
+              <span>Заявки</span>
+              <b>по Казахстану</b>
+            </div>
+            <div class="route-line"><i></i><i></i><i></i></div>
+            <div>
+              <span>Перевозчики</span>
+              <b>в одном кабинете</b>
+            </div>
+          </div>
+          <div class="panel-metrics">
+            <div><b>01</b><span>поиск груза</span></div>
+            <div><b>02</b><span>ставки</span></div>
+            <div><b>03</b><span>контроль рейса</span></div>
+          </div>
+        </aside>
       </div>
-    </div>
-  </div>
+    </section>
 
+    <section class="section story-section">
+      <div class="container story-grid">
+        <article class="story-main">
+          <span class="section-label">Зачем мы это делаем</span>
+          <h2>Логистика должна быть понятной, а не разрозненной</h2>
+          <p>Мы собираем ключевые действия в одном месте: создать груз, найти машину, сравнить предложения, открыть карту и довести перевозку до завершения.</p>
+          <div class="steps">
+            <div><span>1</span><b>Груз появляется в системе</b><p>Заказчик добавляет направление, параметры и цену.</p></div>
+            <div><span>2</span><b>Перевозчик отправляет ставку</b><p>Можно быстро оценить заявку и предложить условия.</p></div>
+            <div><span>3</span><b>Стороны закрывают рейс</b><p>Статусы и данные остаются внутри RouteHub.</p></div>
+          </div>
+        </article>
 
+        <aside class="focus-card">
+          <h3>Фокус проекта</h3>
+          <div class="focus-list">
+            <div><b>Казахстан</b><span>локальный рынок и реальные маршруты</span></div>
+            <div><b>Карта грузов</b><span>визуальный поиск заявок</span></div>
+            <div><b>Аккаунты</b><span>роли заказчика и перевозчика</span></div>
+            <div><b>Мобильность</b><span>готовность к тестам на телефоне</span></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section values-section" id="values">
+      <div class="container">
+        <div class="section-head">
+          <span class="section-label">Принципы</span>
+          <h2>Что важно в продукте</h2>
+        </div>
+        <div class="values-grid">
+          <article class="value-card"><span>01</span><h3>Надежность</h3><p>Ключевые действия должны работать стабильно: регистрация, грузы, ставки, карта.</p></article>
+          <article class="value-card"><span>02</span><h3>Прозрачность</h3><p>Пользователь должен понимать, где груз, кто откликнулся и что делать дальше.</p></article>
+          <article class="value-card"><span>03</span><h3>Скорость</h3><p>Меньше лишних шагов, больше прямого перехода к заявкам и маршрутам.</p></article>
+          <article class="value-card"><span>04</span><h3>Простота</h3><p>Интерфейс должен быть понятным и для грузовладельца, и для перевозчика.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section team-section">
+      <div class="container">
+        <div class="section-head">
+          <span class="section-label">Команда</span>
+          <h2>Люди, которые двигают RouteHub</h2>
+        </div>
+        <div class="team-grid">
+          <article class="person"><div class="avatar">A</div><div><h3>Утегенов Адильжан</h3><p>Frontend • UI/UX</p></div></article>
+          <article class="person"><div class="avatar">B</div><div><h3>Оразхожаева Бибіфатима</h3><p>Медиа • SMM</p></div></article>
+          <article class="person"><div class="avatar">A</div><div><h3>Мухамбеткалиев Али</h3><p>Медиа • SMM</p></div></article>
+          <article class="person"><div class="avatar">B</div><div><h3>Туралив Баглан</h3><p>Генеральный директор</p></div></article>
+        </div>
+      </div>
+    </section>
+  </main>
   <footer class="site-footer">
-    <div class="container">
-
-      <div class="footer-left">
-        © 2025 ROUTE HUB — все права защищены
+    <div class="container footer-grid">
+      <div class="footer-logo-col">
+        <a class="footer-logo" href="../index.html" aria-label="RouteHub">
+          <img src="../images/logowhite.PNG" alt="RouteHub" />
+        </a>
+        <p>Рабочая платформа для грузовладельцев и перевозчиков по Казахстану.</p>
+        <div class="footer-legal">
+          <span>ТОО «RouteHub»</span>
+          <span>БИН: 260440042140</span>
+          <span>Республика Казахстан, г. Кызылорда, ул. Кушербаева 118</span>
+        </div>        <div class="footer-copy">© 2026 RouteHub. Все права защищены.</div>
       </div>
 
-      <div class="footer-nav">
+      <div class="footer-col footer-contact-col">
+        <h3>Контакты</h3>
+        <a class="footer-contact" href="mailto:info.routehub@gmail.com">
+          <span class="footer-contact-icon">@</span>
+          info.routehub@gmail.com
+        </a>
+        <a class="footer-contact" href="https://www.instagram.com/routehub.kz/" target="_blank" rel="noopener noreferrer">
+          <span class="footer-contact-icon">IG</span>
+          Instagram
+        </a>
+      </div>
+
+      <nav class="footer-col footer-links" aria-label="Навигация RouteHub">
+        <h3>RouteHub</h3>
         <a href="../about(test)/about.html">О нас</a>
-        <a href="../newspage/index.html">Новости</a>
+        <a href="../page2/index2.html">Найти груз</a>
+        <a href="../page4/index.html">Добавить груз</a>
         <a href="../mape/map.html">Карта грузов</a>
-        <a href="../stats(test)/statss.html">Статистика</a>
-      </div>
+      </nav>
 
+      <nav class="footer-col footer-links" aria-label="Документы RouteHub">
+        <h3>Документы</h3>
+        <a href="../privacy.html">Политика конфиденциальности</a>
+        <a href="../terms.html">Условия использования</a>
+        <a href="../newspage/index.html">Новости</a>
+      </nav>
     </div>
   </footer>
 
-  <script src="script.js"></script>
-
-  <script>
-  // Функция для обновления шапки, если пользователь залогинен
-  async function updateNavbar() {
-    try {
-      const response = await fetch('/api/me'); // Спрашиваем у сервера данные профиля
-      
-      if (response.ok) {
-        const user = await response.json();
-        
-        // Код, который мы вставим вместо кнопок "Авторизация"
-    const userHtml = `
-  <div style="display: flex; align-items: center; gap: 15px;">
-    <span style="color: var(--text-primary); font-weight: 600; font-size: 14px; letter-spacing: 0.5px;">
-      ${user.name}
-    </span>
-    <button onclick="logoutUser()" class="logout-btn">
-      Выйти
-    </button>
-  </div>
-`;
-
-        // Заменяем кнопки на имя и кнопку выхода в обоих местах
-        document.getElementById('auth-container').innerHTML = userHtml;
-        document.getElementById('auth-container-mobile').innerHTML = userHtml;
-      }
-    } catch (err) {
-      console.log('Пользователь не авторизован');
-    }
-  }
-
-  // Функция для выхода
-  async function logoutUser() {
-    await fetch('/api/logout', { method: 'POST' });
-    window.location.reload(); // Перезагружаем страницу, чтобы кнопки вернулись в исходный вид
-  }
-
-  // Запускаем проверку при загрузке страницы
-  document.addEventListener('DOMContentLoaded', updateNavbar);
-</script>
-
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+  <script src="script.js?v=20260504-1"></script>
 </body>
-
 </html>

@@ -5,72 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Статистика — Route Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20260506-1">
 </head>
 <body class="stats-page">
 
     <div class="stats-container">
         <div class="stats-header">
-            <a href="../index.html" class="back-btn">← Профиль</a>
-            <h1>Аналитика рейсов</h1>
-            <p>Ваши показатели за текущий месяц</p>
+            <a class="stats-logo-link" href="../index.html" aria-label="RouteHub"><img class="stats-logo" src="../images/logo.png" alt="RouteHub"></a>
+            <a href="../index.html" class="back-btn">← На главную</a>
+            <h1>Статистика RouteHub</h1>
+            <p id="stats-updated">Живые данные из базы загружаются...</p>
         </div>
 
         <div class="stats-main-grid">
             <div class="stat-card accent">
-                <span class="stat-label">Доход за месяц</span>
-                <span class="stat-value">1 240 000 ₸</span>
-                <span class="stat-trend">+12% к прошлому месяцу</span>
+                <span class="stat-label">Оборот принятых ставок за месяц</span>
+                <span class="stat-value" id="month-turnover">0 ₸</span>
+                <span class="stat-trend" id="month-turnover-sub">По принятым ставкам</span>
             </div>
             <div class="stat-card">
-                <span class="stat-label">Выполнено рейсов</span>
-                <span class="stat-value">28</span>
+                <span class="stat-label">Активные грузы</span>
+                <span class="stat-value" id="active-loads">0</span>
                 <div class="stat-progress">
-                    <div class="progress-fill" style="width: 85%;"></div>
+                    <div class="progress-fill" id="active-progress" style="width: 0%;"></div>
                 </div>
-                <span class="stat-sub">План: 32</span>
+                <span class="stat-sub" id="active-loads-sub">Открытые и назначенные</span>
             </div>
             <div class="stat-card">
-                <span class="stat-label">Общий пробег</span>
-                <span class="stat-value">12 450 <small>км</small></span>
-                <span class="stat-sub">Среднее: 445 км/день</span>
+                <span class="stat-label">Завершено перевозок</span>
+                <span class="stat-value" id="completed-loads">0</span>
+                <span class="stat-sub" id="completed-loads-sub">По всем грузам</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Участников</span>
+                <span class="stat-value" id="total-users">0</span>
+                <span class="stat-sub" id="users-sub">Грузовладельцы и перевозчики</span>
             </div>
         </div>
 
         <div class="stats-secondary-grid">
             <div class="data-box">
-                <h3>Эффективность логистики</h3>
+                <h3>Исполнение сделок</h3>
                 <div class="efficiency-indicator">
                     <svg viewBox="0 0 36 36" class="circular-chart">
                         <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="circle" stroke-dasharray="92, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <text x="18" y="20.35" class="percentage">92%</text>
+                        <path id="completion-circle" class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <text x="18" y="20.35" class="percentage" id="completion-rate">0%</text>
                     </svg>
-                    <p>Загрузка транспорта близка к идеальной</p>
+                    <p id="completion-sub">Доля завершённых грузов от общего количества.</p>
                 </div>
             </div>
 
             <div class="data-box">
                 <h3>Топ направлений</h3>
-                <ul class="top-routes">
-                    <li>
-                        <span>Алматы — Астана</span>
-                        <strong>12 рейсов</strong>
-                    </li>
-                    <li>
-                        <span>Шымкент — Караганда</span>
-                        <strong>8 рейсов</strong>
-                    </li>
-                    <li>
-                        <span>Атырау — Актау</span>
-                        <strong>5 рейсов</strong>
-                    </li>
+                <ul class="top-routes" id="top-routes">
+                    <li><span>Загружаем...</span><strong>0</strong></li>
                 </ul>
             </div>
         </div>
 
-        <button class="btn-export">Скачать отчет (PDF)</button>
+        <div class="stats-secondary-grid stats-bottom-grid">
+            <div class="data-box">
+                <h3>Ставки</h3>
+                <ul class="top-routes">
+                    <li><span>Всего ставок</span><strong id="offers-total">0</strong></li>
+                    <li><span>Ожидают ответа</span><strong id="offers-pending">0</strong></li>
+                    <li><span>Приняты</span><strong id="offers-accepted">0</strong></li>
+                </ul>
+            </div>
+
+            <div class="data-box">
+                <h3>Финансы</h3>
+                <ul class="top-routes">
+                    <li><span>В заморозке</span><strong id="escrow-held">0 ₸</strong></li>
+                    <li><span>Выплачено</span><strong id="escrow-released">0 ₸</strong></li>
+                    <li><span>Комиссия</span><strong id="commission-total">0 ₸</strong></li>
+                </ul>
+            </div>
+        </div>
+
+        <button class="btn-export" id="refresh-stats" type="button">Обновить данные</button>
     </div>
 
+    <script src="script.js"></script>
 </body>
 </html>

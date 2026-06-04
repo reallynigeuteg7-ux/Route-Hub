@@ -14,13 +14,13 @@
     <div class="container nav-inner">
       <div class="logo">
         <a href="../index.html">
-          <img src="https://i.ibb.co.com/GvcSrYbs/1-edited-free-carve-photos-1.png" alt="logo">
+         <img src="../images/logo.png" alt="logo">
         </a>
     </div>
   </header>
 
  <main class="container">
-  <div class="card add-cargo-card">
+  <div class="card add-cargo-card offer-like-card">
     <div class="body">
       <h2>Размещение груза</h2>
       <p class="muted">Заполните детали, чтобы перевозчики могли предложить точную цену</p>
@@ -111,16 +111,47 @@
           <div class="grid cols-3">
             <div>
               <label>Вес (тонн)</label>
-              <input type="number" id="weight" step="0.1" placeholder="5" required />
+              <input type="number" id="weight" min="0.1" max="100" step="0.1" placeholder="5" required />
             </div>
             <div>
               <label>Объем (м³)</label>
-              <input type="number" id="volume" step="0.1" placeholder="82" />
+              <input type="number" id="volume" min="0" max="300" step="0.1" placeholder="82" />
             </div>
             <div>
               <label>Тип кузова</label>
               <select id="cargoType" required>
-                <option>Тент</option><option>Рефрижератор</option><option>Фургон</option><option>Бортовой</option>
+
+  "Тент",
+  "Борт",
+  "Рефрижератор",
+  "Изотерм",
+  "Контейнер",
+  "Цистерна",
+  "Автовоз",
+  "Платформа",
+  "Самосвал",
+  "Открытый",
+  "Зерновоз",
+  "Контейнеровоз",
+  "Скотовоз",
+  "Фургон",
+  "Рефка",
+  "Тентованый",
+  "Трал",
+  "Изотермический",
+  "Цельнометаллический",
+  "Кунг",
+  "Камаз-термос"
+
+                <option>Тент</option><option>Рефрижератор</option><option>Фургон</option>   
+                <option>Изотерм</option><option>Контейнер</option><option>Цистерна</option>   
+                <option>Автовоз</option><option>Платформа</option><option>Самосвал</option>   
+                <option>Открытый</option><option>Зерновоз</option><option>Контейнеровоз</option>  
+                <option>Скотовоз</option><option>Фургон</option><option>Рефка</option>  
+                <option>Тентованый</option><option>Трал</option><option>Изотермический</option>  
+                <option>Цельнометаллический</option><option>Кунг</option><option>Камаз-термос</option>    
+                 
+
               </select>
             </div>
           </div>
@@ -128,15 +159,15 @@
           <div class="grid cols-3" style="margin-top: 15px;">
             <div>
               <label>Длина (м)</label>
-              <input type="number" id="length" step="0.1" placeholder="13.6" />
+              <input type="number" id="length" min="0" max="30" step="0.1" placeholder="13.6" />
             </div>
             <div>
               <label>Ширина (м)</label>
-              <input type="number" id="width" step="0.1" placeholder="2.45" />
+              <input type="number" id="width" min="0" max="4" step="0.1" placeholder="2.45" />
             </div>
             <div>
               <label>Высота (м)</label>
-              <input type="number" id="height" step="0.1" placeholder="2.7" />
+              <input type="number" id="height" min="0" max="5" step="0.1" placeholder="2.7" />
             </div>
           </div>
         </div>
@@ -154,8 +185,8 @@
               </select>
             </div>
             <div>
-              <label>Ставка ($ или ₸)</label>
-              <input type="number" id="price" placeholder="50000" required />
+              <label>Ставка ₸</label>
+              <input type="number" id="price" min="1000" max="100000000" step="1000" placeholder="50000" required />
             </div>
           </div>
           <div style="margin-top: 15px;">
@@ -171,24 +202,6 @@
     </div>
   </div>
 </main>
-
-<footer class="site-footer">
-  <div class="container">
-    
-    <div class="footer-left">
-      © 2025 Route Hub — все права защищены
-    </div>
-
-    <div class="footer-nav">
-     <a href="../about(test)/about.html">О нас</a>
-     <a href="../newspage/index.html">Новости</a>
-     <a href="../mape/map.html">Карта грузов</a>
-     <a href="../stats(test)/statss.html">Статистика</a>
-    </div>
-
-    
-  </div>
-</footer>
 
 <div id="success-modal" class="modal">
   <div class="modal-content">
