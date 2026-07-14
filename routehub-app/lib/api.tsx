@@ -23,4 +23,4 @@ const API_HOST =
 
 export const API_BASE_URL =
   ENV_API_BASE_URL ||
-  'https://routehubkz.com';
+  'https://route-hub-vf1o.onrender.com';
