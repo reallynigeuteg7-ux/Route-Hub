@@ -977,7 +977,16 @@ app.get('/sitemap.xml', (req, res) => {
     res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`);
 });
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+    setHeaders: (res, filePath) => {
+        if (/\.(?:html|css|js|mjs|json|xml|txt)$/i.test(filePath)) {
+            const currentType = res.getHeader('Content-Type');
+            if (currentType && !String(currentType).toLowerCase().includes('charset=')) {
+                res.setHeader('Content-Type', String(currentType) + '; charset=utf-8');
+            }
+        }
+    }
+}));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 function checkAuth(req, res, next) {
@@ -2032,53 +2041,55 @@ app.post('/api/mobile/register/check', async (req, res) => {
     const normalizedPhone = normalizePhone(phone);
 
     if (!isValidEmail(normalizedEmail)) {
-        return res.status(400).json({ error: '??????? ?????????? Email' });
+        return res.status(400).json({ error: '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043a\u043e\u0440\u0440\u0435\u043a\u0442\u043d\u044b\u0439 Email' });
     }
 
     if (!normalizedPhone || normalizedPhone.replace(/\D/g, '').length < 10) {
-        return res.status(400).json({ error: '??????? ?????????? ????? ????????' });
+        return res.status(400).json({ error: '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043a\u043e\u0440\u0440\u0435\u043a\u0442\u043d\u044b\u0439 \u043d\u043e\u043c\u0435\u0440 \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0430' });
     }
 
     try {
         const existingEmail = await getOne('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
-        if (existingEmail) return res.status(400).json({ error: '???? Email ??? ?????' });
+        if (existingEmail) return res.status(400).json({ error: '\u042d\u0442\u043e\u0442 Email \u0443\u0436\u0435 \u0437\u0430\u043d\u044f\u0442' });
 
         const existingPhone = await getOne('SELECT id FROM users WHERE phone = $1', [normalizedPhone]);
-        if (existingPhone) return res.status(400).json({ error: '???? ????? ???????? ??? ?????' });
+        if (existingPhone) return res.status(400).json({ error: '\u042d\u0442\u043e\u0442 \u043d\u043e\u043c\u0435\u0440 \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0430 \u0443\u0436\u0435 \u0437\u0430\u043d\u044f\u0442' });
 
         res.json({ ok: true });
     } catch (err) {
         console.error('Mobile register check error:', err);
-        res.status(500).json({ error: '?????? ???????' });
+        res.status(500).json({ error: '\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430' });
     }
 });
 
 app.post('/api/mobile/register', async (req, res) => {
-    const { name, email, password, role, phone, company, person_type, emailCode } = req.body;
+    const { name, email, password, role, phone, company, person_type, firebaseIdToken } = req.body;
     const normalizedEmail = normalizeEmail(email);
     const normalizedPhone = normalizePhone(phone);
 
     if (!isValidEmail(normalizedEmail)) {
-        return res.status(400).json({ error: '??????? ?????????? Email' });
+        return res.status(400).json({ error: '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043a\u043e\u0440\u0440\u0435\u043a\u0442\u043d\u044b\u0439 Email' });
     }
 
     if (!isValidPassword(password)) {
-        return res.status(400).json({ error: '?????? ?????? ???? ?? ?????? 6 ????????' });
+        return res.status(400).json({ error: '\u041f\u0430\u0440\u043e\u043b\u044c \u0434\u043e\u043b\u0436\u0435\u043d \u0431\u044b\u0442\u044c \u043d\u0435 \u043a\u043e\u0440\u043e\u0447\u0435 6 \u0441\u0438\u043c\u0432\u043e\u043b\u043e\u0432' });
     }
 
     if (!normalizedPhone || normalizedPhone.replace(/\D/g, '').length < 10) {
-        return res.status(400).json({ error: '??????? ?????????? ????? ????????' });
+        return res.status(400).json({ error: '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043a\u043e\u0440\u0440\u0435\u043a\u0442\u043d\u044b\u0439 \u043d\u043e\u043c\u0435\u0440 \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0430' });
     }
 
     try {
+        const phoneCheck = await verifyFirebasePhoneToken(firebaseIdToken, normalizedPhone);
+        if (!phoneCheck.ok) return res.status(400).json({ error: phoneCheck.error });
+
         const existingEmail = await getOne('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
-        if (existingEmail) return res.status(400).json({ error: '???? Email ??? ?????' });
+        if (existingEmail) return res.status(400).json({ error: '\u042d\u0442\u043e\u0442 Email \u0443\u0436\u0435 \u0437\u0430\u043d\u044f\u0442' });
 
         const existingPhone = await getOne('SELECT id FROM users WHERE phone = $1', [normalizedPhone]);
-        if (existingPhone) return res.status(400).json({ error: '???? ????? ???????? ??? ?????' });
+        if (existingPhone) return res.status(400).json({ error: '\u042d\u0442\u043e\u0442 \u043d\u043e\u043c\u0435\u0440 \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0430 \u0443\u0436\u0435 \u0437\u0430\u043d\u044f\u0442' });
 
-        const emailCheck = await verifyRegistrationEmailCode(normalizedEmail, emailCode);
-        if (!emailCheck.ok) return res.status(400).json({ error: emailCheck.error });
+        const verifiedPhone = phoneCheck.phone || normalizedPhone;
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -2086,10 +2097,8 @@ app.post('/api/mobile/register', async (req, res) => {
             `INSERT INTO users (name, email, password, role, phone, company, person_type)
              VALUES ($1, $2, $3, $4, $5, $6, $7)
              RETURNING id`,
-            [name, normalizedEmail, hashedPassword, role || 'client', normalizedPhone, company || '', person_type || 'individual']
+            [name, normalizedEmail, hashedPassword, role || 'client', verifiedPhone, company || '', person_type || 'individual']
         );
-
-        await query('UPDATE registration_email_codes SET used = true WHERE id = $1', [emailCheck.id]);
 
         const userCode = await assignUserCode(result.rows[0].id);
 
@@ -2109,7 +2118,7 @@ app.post('/api/mobile/register', async (req, res) => {
                 id: newUser.id,
                 name,
                 email: normalizedEmail,
-                phone: normalizedPhone,
+                phone: verifiedPhone,
                 company: company || '',
                 role: role || 'client',
                 person_type: person_type || 'individual',
@@ -2119,10 +2128,10 @@ app.post('/api/mobile/register', async (req, res) => {
         });
     } catch (e) {
         if (isUniqueViolation(e)) {
-            return res.status(400).json({ error: '???? Email ??? ?????' });
+            return res.status(400).json({ error: '\u042d\u0442\u043e\u0442 Email \u0443\u0436\u0435 \u0437\u0430\u043d\u044f\u0442' });
         }
         console.error('Mobile register error:', e);
-        res.status(500).json({ error: '?????? ???????' });
+        res.status(500).json({ error: '\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430' });
     }
 });
 app.post('/api/mobile/login', async (req, res) => {
