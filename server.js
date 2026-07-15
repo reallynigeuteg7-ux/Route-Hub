@@ -22,6 +22,9 @@ let lastEmailSendError = null;
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
     auth: {
         user: EMAIL_USER,
         pass: EMAIL_PASS,
@@ -31,6 +34,16 @@ const transporter = nodemailer.createTransport({
 async function sendEmail({ to, subject, html, text }) {
     try {
         lastEmailSendError = null;
+        if (!EMAIL_USER || !EMAIL_PASS) {
+            lastEmailSendError = {
+                code: 'EMAIL_CONFIG_MISSING',
+                responseCode: null,
+                message: 'EMAIL_USER and EMAIL_PASS are not configured',
+                response: null
+            };
+            console.error('Email send error:', lastEmailSendError);
+            return false;
+        }
         await transporter.sendMail({
             from: '"RouteHub" <' + EMAIL_USER + '>',
             to,

@@ -43,6 +43,17 @@ const emailCodeInput = document.getElementById('reg-email-code');
 const registerButton = document.getElementById('reg-submit');
 let emailCodeSentTo = '';
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = 20000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 toggle.addEventListener('click', (e) => {
   e.preventDefault();
   if (loginForm.style.display === 'none') {
@@ -84,7 +95,7 @@ registerForm.addEventListener('submit', async (e) => {
 
     if (emailCodeSentTo !== email || !emailCode) {
       msg.textContent = '\u041e\u0442\u043f\u0440\u0430\u0432\u043b\u044f\u0435\u043c \u043a\u043e\u0434 \u043d\u0430 email...';
-      const codeRes = await fetch('/api/register/email-code', {
+      const codeRes = await fetchWithTimeout('/api/register/email-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, phone }),
@@ -124,7 +135,9 @@ registerForm.addEventListener('submit', async (e) => {
     msg.textContent = json.error || '\u041e\u0448\u0438\u0431\u043a\u0430 \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u0438';
   } catch (err) {
     console.error('Register error:', err);
-    msg.textContent = '\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u043e\u0435\u0434\u0438\u043d\u0435\u043d\u0438\u044f \u0441 \u0441\u0435\u0440\u0432\u0435\u0440\u043e\u043c';
+    msg.textContent = err?.name === 'AbortError'
+      ? '\u0421\u0435\u0440\u0432\u0435\u0440 \u043d\u0435 \u043e\u0442\u0432\u0435\u0442\u0438\u043b. \u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0435\u0449\u0435 \u0440\u0430\u0437.'
+      : '\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u043e\u0435\u0434\u0438\u043d\u0435\u043d\u0438\u044f \u0441 \u0441\u0435\u0440\u0432\u0435\u0440\u043e\u043c';
   } finally {
     registerButton.disabled = false;
   }
