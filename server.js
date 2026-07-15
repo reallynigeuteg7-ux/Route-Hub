@@ -2002,6 +2002,10 @@ app.post('/api/wallet/withdraw-request', checkAuth, async (req, res) => {
     }
 });
 app.post('/api/wallet/topup-test', checkAuth, async (req, res) => {
+    if (process.env.ALLOW_TEST_BALANCE !== 'true') {
+        return res.status(404).json({ error: 'Not found' });
+    }
+
     const userId = req.session.userId;
     const amount = toMoney(req.body?.amount || 0);
 
@@ -2173,6 +2177,29 @@ app.post('/api/mobile/login', async (req, res) => {
     }
 });
 
+app.post('/api/mobile/change-password', checkMobileAuth, async (req, res) => {
+    const { currentPassword, newPassword } = req.body || {};
+    const current = String(currentPassword || '');
+    const next = String(newPassword || '');
+
+    if (!current || !next) return res.status(400).json({ error: 'Укажи текущий и новый пароль' });
+    if (next.length < 6) return res.status(400).json({ error: 'Новый пароль должен быть минимум 6 символов' });
+    if (current === next) return res.status(400).json({ error: 'Новый пароль должен отличаться от текущего' });
+
+    try {
+        const user = await getOne('SELECT password FROM users WHERE id = $1', [req.mobileUser.userId]);
+        if (!user || !(await bcrypt.compare(current, user.password))) {
+            return res.status(400).json({ error: 'Текущий пароль указан неверно' });
+        }
+
+        const hashedPassword = await bcrypt.hash(next, 10);
+        await query('UPDATE users SET password = $1 WHERE id = $2', [hashedPassword, req.mobileUser.userId]);
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('Mobile change password error:', err);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
 app.get('/api/mobile/me', checkMobileAuth, async (req, res) => {
     const userId = req.mobileUser.userId;
 
@@ -2278,6 +2305,10 @@ app.post('/api/mobile/wallet/withdraw-request', checkMobileAuth, async (req, res
     }
 });
 app.post('/api/mobile/wallet/topup-test', checkMobileAuth, async (req, res) => {
+    if (process.env.ALLOW_TEST_BALANCE !== 'true') {
+        return res.status(404).json({ error: 'Not found' });
+    }
+
     const userId = req.mobileUser.userId;
     const amount = toMoney(req.body?.amount || 0);
 
