@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
-import { API_BASE_URL } from '../lib/api';
+import { API_BASE_URL, PRIVACY_POLICY_URL, TERMS_URL } from '../lib/api';
 import { goBackOrFallback } from '../lib/navigation';
 import { useAppTheme } from '../lib/theme';
 import { startPersistentLocationTracking } from '../lib/background-location';
@@ -152,8 +152,8 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
   }
 }
 
-function openLegalUrl(path: '/terms.html' | '/privacy.html') {
-  void Linking.openURL(API_BASE_URL + path).catch(() => {
+function openLegalUrl(url: string) {
+  void Linking.openURL(url).catch(() => {
     Alert.alert('Ошибка', 'Не удалось открыть документ');
   });
 }
@@ -356,11 +356,11 @@ export default function RegisterScreen() {
             </View>
             <View style={styles.legalBox}>
               <Text style={styles.legalText}>Регистрируясь, вы принимаете </Text>
-              <TouchableOpacity activeOpacity={0.75} onPress={() => openLegalUrl('/terms.html')}>
+              <TouchableOpacity activeOpacity={0.75} onPress={() => openLegalUrl(TERMS_URL)}>
                 <Text style={styles.legalLink}>условия использования</Text>
               </TouchableOpacity>
               <Text style={styles.legalText}> и </Text>
-              <TouchableOpacity activeOpacity={0.75} onPress={() => openLegalUrl('/privacy.html')}>
+              <TouchableOpacity activeOpacity={0.75} onPress={() => openLegalUrl(PRIVACY_POLICY_URL)}>
                 <Text style={styles.legalLink}>политику конфиденциальности</Text>
               </TouchableOpacity>
               <Text style={styles.legalText}>.</Text>

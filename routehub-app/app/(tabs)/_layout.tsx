@@ -48,8 +48,12 @@ function FloatingTabBar({
   const { colors, isDark } = useAppTheme();
 
   const visibleRoutes = useMemo(
-    () => state.routes.filter((route) => !(hideCreate && route.name === 'create')),
-    [state.routes, hideCreate]
+    () =>
+      state.routes.filter((route) => {
+        const options = descriptors[route.key]?.options as { href?: unknown };
+        return options.href !== null && !(hideCreate && route.name === 'create');
+      }),
+    [state.routes, descriptors, hideCreate]
   );
 
   const [barWidth, setBarWidth] = useState(0);
@@ -233,6 +237,7 @@ export default function TabsLayout() {
         <Tabs.Screen name="create" options={{ title: 'Создать' }} />
         <Tabs.Screen name="chat" options={{ title: 'Чат' }} />
         <Tabs.Screen name="profile" options={{ title: 'Профиль' }} />
+        <Tabs.Screen name="profile-stitch" options={{ title: 'Профиль Stitch', href: null }} />
       </Tabs>
     </>
   );

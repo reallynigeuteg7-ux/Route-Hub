@@ -842,7 +842,7 @@ async function initDb() {
     await query(`CREATE INDEX IF NOT EXISTS idx_escrows_load_id ON escrows ("loadId")`);
     await query(`CREATE INDEX IF NOT EXISTS idx_escrows_status ON escrows (status)`);
 
-    
+
 await query(`
     CREATE TABLE IF NOT EXISTS reviews (
         id BIGSERIAL PRIMARY KEY,
@@ -855,7 +855,7 @@ await query(`
         UNIQUE ("reviewerId", "loadId")  -- один отзыв на один груз
     )
 `);
- 
+
 await query(`CREATE INDEX IF NOT EXISTS idx_reviews_reviewee_id ON reviews ("revieweeId")`);
 }
 
@@ -3046,7 +3046,7 @@ app.post('/api/reviews', checkAuth, async (req, res) => {
 
 app.get('/api/mobile/reviews/:userId', checkMobileAuth, async (req, res) => {
     const userId = Number(req.params.userId);
- 
+
     try {
         const reviews = await getMany(`
             SELECT
@@ -3063,18 +3063,18 @@ app.get('/api/mobile/reviews/:userId', checkMobileAuth, async (req, res) => {
             WHERE reviews."revieweeId" = $1
             ORDER BY reviews."createdAt" DESC
         `, [userId]);
- 
+
         const totalCount = reviews.length;
         const averageRating = totalCount > 0
             ? reviews.reduce((sum, r) => sum + r.rating, 0) / totalCount
             : 0;
- 
+
         res.json({
             averageRating: Math.round(averageRating * 10) / 10,
             totalCount,
             reviews,
         });
- 
+
     } catch (err) {
         console.error('GET /reviews error:', err);
         res.status(500).json({ error: err.message });
@@ -6874,8 +6874,8 @@ const ChatTemplates = {
                 <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">
                     ${msg.sender} — ${msg.time}
                 </div>
-                <div style="display: inline-block; padding: 10px 15px; border-radius: 12px; 
-                            background: ${isMe ? '#6366f1' : 'rgba(255,255,255,0.1)'}; 
+                <div style="display: inline-block; padding: 10px 15px; border-radius: 12px;
+                            background: ${isMe ? '#6366f1' : 'rgba(255,255,255,0.1)'};
                             color: white; font-size: 14px; max-width: 80%; word-wrap: break-word;">
                     ${msg.text}
                 </div>
@@ -6888,7 +6888,7 @@ const ChatTemplates = {
     renderDialog: function (data) {
         return `
             <div class="chat-layout-wrapper" style="display: flex; height: 100%; width: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border-radius: 20px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.3);">
-                
+
                 <div class="chat-back" style="position: absolute; top: 20px; left: 10px; z-index: 10; color: white; cursor: pointer; padding: 10px;">
                     <i class="fa-solid fa-chevron-left"></i>
                 </div>

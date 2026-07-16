@@ -128,37 +128,6 @@ export default function ProfileScreen() {
     return `${numeric.toLocaleString('ru-RU')} ₸`;
   };
 
-  const topUpTestBalance = async () => {
-    try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        Alert.alert('Ошибка', 'Нужно войти в аккаунт');
-        return;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/mobile/wallet/topup-test`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ amount: 100000 }),
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        Alert.alert('Ошибка', data?.error || 'Не удалось пополнить баланс');
-        return;
-      }
-
-      await fetchProfile(false);
-      Alert.alert('Готово', 'Тестовый баланс пополнен на 100 000 ₸');
-    } catch (err) {
-      console.log('Top up test balance error:', err);
-      Alert.alert('Ошибка', 'Не удалось подключиться к серверу');
-    }
-  };
-
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
@@ -231,8 +200,8 @@ export default function ProfileScreen() {
                 <Text style={styles.walletLabel}>Баланс</Text>
                 <Text style={styles.walletValue}>{formatMoney(user.wallet?.availableBalance)}</Text>
               </View>
-              <TouchableOpacity style={styles.walletButton} activeOpacity={0.85} onPress={topUpTestBalance}>
-                <Text style={styles.walletButtonText}>+100 000 ₸</Text>
+              <TouchableOpacity style={styles.walletButton} activeOpacity={0.85} onPress={() => router.push('/wallet-topup' as any)}>
+                <Text style={styles.walletButtonText}>Пополнить баланс</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.walletStats}>

@@ -55,6 +55,9 @@ routehub-app/android/app/.cxx/
 routehub-app/android/app/debug.keystore
 routehub-app/android/app/src/main/assets/dgissdk.key
 routehub-app/native-keys/
+routehub-app/.gradle-user-home/
+*.aab
+topup_*.jpg
 
 # OS/editor
 .DS_Store
@@ -64,3 +67,9 @@ Thumbs.db
 
 # Accidental Android runtime/cache files
 routehub-app/okhttp3.*
+
+.codex-ssh/
+.deploy-worktree/
+.updated
+доки/
+fleetbase-main/

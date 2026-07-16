@@ -2,11 +2,11 @@ import React, { useMemo, useRef, useState } from 'react';
 import {
   StyleSheet,
   Text,
+  TextInput,
   View,
   ScrollView,
   StatusBar,
   TouchableOpacity,
-  TextInput,
   Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -51,11 +51,13 @@ export default function SendOfferScreen() {
   const loadTitle = String(params.title || T.cargo);
   const loadRoute = String(params.route || T.routeMissing);
   const ownerId = String(params.ownerId || '');
+  const editOfferId = String(params.editOfferId || '');
+  const editMode = Boolean(editOfferId);
 
-  const [price, setPrice] = useState('');
-  const [pickupDate, setPickupDate] = useState('');
-  const [truckType, setTruckType] = useState('');
-  const [comment, setComment] = useState('');
+  const [price, setPrice] = useState(String(params.price || ''));
+  const [pickupDate, setPickupDate] = useState(String(params.pickupDate || ''));
+  const [truckType, setTruckType] = useState(String(params.truckType || ''));
+  const [comment, setComment] = useState(String(params.comment || ''));
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
@@ -88,8 +90,8 @@ export default function SendOfferScreen() {
         return;
       }
 
-      const response = await fetch(API_BASE_URL + '/api/mobile/offers', {
-        method: 'POST',
+      const response = await fetch(editMode ? API_BASE_URL + '/api/mobile/offers/' + editOfferId : API_BASE_URL + '/api/mobile/offers', {
+        method: editMode ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token,
@@ -111,7 +113,7 @@ export default function SendOfferScreen() {
         return;
       }
 
-      Alert.alert(T.success, T.sent);
+      Alert.alert(T.success, editMode ? 'Ставка изменена' : T.sent);
       router.replace('/stavki');
     } catch (error) {
       console.log('Send offer error:', error);
@@ -136,8 +138,8 @@ export default function SendOfferScreen() {
               <Text style={styles.back}>{T.back}</Text>
             </TouchableOpacity>
 
-            <Text style={styles.pageTitle}>{T.title}</Text>
-            <Text style={styles.pageSubtitle}>{T.subtitle}</Text>
+            <Text style={styles.pageTitle}>{editMode ? 'Изменить ставку' : T.title}</Text>
+            <Text style={styles.pageSubtitle}>{editMode ? 'Обнови условия предложения для выбранного груза' : T.subtitle}</Text>
 
             <View style={styles.infoCard}>
               <Text style={styles.loadTitle}>{loadTitle}</Text>
@@ -207,7 +209,7 @@ export default function SendOfferScreen() {
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.submitButtonText}>{T.title}</Text>
+                <Text style={styles.submitButtonText}>{editMode ? 'Сохранить изменения' : T.title}</Text>
               )}
             </TouchableOpacity>
           </View>

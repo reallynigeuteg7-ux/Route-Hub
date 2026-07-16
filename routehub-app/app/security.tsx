@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   StyleSheet,
   Text,
   View,
@@ -10,7 +11,9 @@ import {
   Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE_URL } from '../lib/api';
+import { logoutAndGoHome } from '../lib/logout';
 import { goBackOrFallback } from '../lib/navigation';
 
 export default function SecurityScreen() {
@@ -19,6 +22,64 @@ export default function SecurityScreen() {
   const [repeatPassword, setRepeatPassword] = useState('');
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [loginAlertsEnabled, setLoginAlertsEnabled] = useState(true);
+
+  useEffect(() => {
+    AsyncStorage.multiGet(['security.twoFactorEnabled', 'security.loginAlertsEnabled']).then((entries) => {
+      const values = Object.fromEntries(entries);
+      if (values['security.twoFactorEnabled'] !== null) setTwoFactorEnabled(values['security.twoFactorEnabled'] === 'true');
+      if (values['security.loginAlertsEnabled'] !== null) setLoginAlertsEnabled(values['security.loginAlertsEnabled'] !== 'false');
+    }).catch(() => undefined);
+  }, []);
+
+  const handleSave = async () => {
+    if (newPassword || repeatPassword || currentPassword) {
+      if (!currentPassword || !newPassword || !repeatPassword) {
+        Alert.alert('Ошибка', 'Заполни все поля для смены пароля');
+        return;
+      }
+      if (newPassword !== repeatPassword) {
+        Alert.alert('Ошибка', 'Новые пароли не совпадают');
+        return;
+      }
+      if (newPassword.length < 6) {
+        Alert.alert('Ошибка', 'Новый пароль должен быть минимум 6 символов');
+        return;
+      }
+    }
+
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        Alert.alert('Ошибка', 'Нужно войти в аккаунт');
+        return;
+      }
+
+      if (newPassword) {
+        const response = await fetch(API_BASE_URL + '/api/mobile/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ currentPassword, newPassword }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data?.error || 'Не удалось изменить пароль');
+        setCurrentPassword('');
+        setNewPassword('');
+        setRepeatPassword('');
+      }
+
+      await AsyncStorage.multiSet([
+        ['security.twoFactorEnabled', String(twoFactorEnabled)],
+        ['security.loginAlertsEnabled', String(loginAlertsEnabled)],
+      ]);
+      Alert.alert('Сохранено', newPassword ? 'Пароль и настройки обновлены' : 'Настройки безопасности сохранены');
+    } catch (error) {
+      Alert.alert('Ошибка', error instanceof Error ? error.message : 'Не удалось сохранить изменения');
+    }
+  };
+
+  const handleLogout = async () => {
+    await logoutAndGoHome();
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
@@ -128,12 +189,12 @@ export default function SecurityScreen() {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.saveButton} activeOpacity={0.85}>
+          <TouchableOpacity style={styles.saveButton} activeOpacity={0.85} onPress={handleSave}>
             <Text style={styles.saveButtonText}>Сохранить изменения</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.dangerButton} activeOpacity={0.85}>
-            <Text style={styles.dangerButtonText}>Выйти со всех устройств</Text>
+          <TouchableOpacity style={styles.dangerButton} activeOpacity={0.85} onPress={handleLogout}>
+            <Text style={styles.dangerButtonText}>Выйти с этого устройства</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

@@ -167,7 +167,19 @@ export default function OfferDetailsScreen() {
   };
 
   const editOffer = () => {
-    Alert.alert('Скоро', 'Следующим шагом подключим редактирование ставки');
+    router.push({
+      pathname: '/send-offer',
+      params: {
+        loadId,
+        title,
+        route,
+        editOfferId: offerId,
+        price,
+        pickupDate,
+        truckType,
+        comment,
+      },
+    });
   };
 
   const openOfferChat = async () => {

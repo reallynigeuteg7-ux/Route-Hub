@@ -1,184 +1,203 @@
-﻿import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
-import * as TaskManager from 'expo-task-manager';
+import { Platform } from 'react-native';
 import { API_BASE_URL } from './api';
 
-const LOCATION_TASK_NAME = 'routehub-carrier-location';
+const LEGACY_LOCATION_TASK_NAME = 'routehub-persistent-carrier-location';
+const LOCATION_DISCLOSURE_ACCEPTED_KEY = 'routehub_location_disclosure_accepted_v1';
+const TRACKED_LOAD_IDS_KEY = 'routehub_tracked_carrier_load_ids_v1';
+const LAST_LOAD_REFRESH_KEY = 'routehub_tracked_load_refresh_at_v1';
+const LOAD_REFRESH_INTERVAL_MS = 2 * 60 * 1000;
 
-type ActiveLoad = {
-  loadId?: number | string;
-  status?: string;
-  load_status?: string;
-  carrierCompleted?: boolean;
-};
-
-type OffersResponse = {
+type OffersScreenResponse = {
   mode?: 'carrier' | 'owner';
-  items?: ActiveLoad[];
+  items?: Array<{
+    loadId?: number | string;
+    status?: string;
+    load_status?: string;
+    carrierCompleted?: boolean;
+  }>;
 };
 
-type LocationTaskData = {
-  locations?: Location.LocationObject[];
-};
-
-async function getAuthToken() {
-  return AsyncStorage.getItem('userToken');
+function normalizeRole(value: unknown) {
+  return String(value || '').trim().toLowerCase();
 }
 
-async function getActiveLoadIds(token: string) {
-  const response = await fetch(`${API_BASE_URL}/api/mobile/offers-screen`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+async function isCarrierUser() {
+  const raw = await AsyncStorage.getItem('userData');
+  if (!raw) return false;
 
-  if (!response.ok) return [];
-
-  const data = (await response.json().catch(() => ({}))) as OffersResponse;
-  if (data.mode !== 'carrier' || !Array.isArray(data.items)) return [];
-
-  return data.items
-    .filter(
-      (item) =>
-        item.status === 'accepted' &&
-        item.load_status === 'assigned' &&
-        !item.carrierCompleted
-    )
-    .map((item) => Number(item.loadId))
-    .filter((loadId) => Number.isFinite(loadId));
+  try {
+    const user = JSON.parse(raw);
+    const role = normalizeRole(user?.role || user?.userRole || user?.type);
+    return role === 'carrier' || role === 'driver' || role.includes('carrier') || role.includes('driver') || role.includes('\u043f\u0435\u0440\u0435\u0432\u043e\u0437');
+  } catch {
+    return false;
+  }
 }
 
-async function publishLocation(
-  token: string,
-  loadId: number,
-  location: Location.LocationObject
-) {
+async function readTrackedLoadIds() {
+  const raw = await AsyncStorage.getItem(TRACKED_LOAD_IDS_KEY);
+  if (!raw) return [] as string[];
+
+  try {
+    const ids = JSON.parse(raw);
+    if (!Array.isArray(ids)) return [];
+    return ids.map((id) => String(id)).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+async function writeTrackedLoadIds(ids: string[]) {
+  const uniqueIds = Array.from(new Set(ids.map((id) => String(id)).filter(Boolean)));
+  await AsyncStorage.setItem(TRACKED_LOAD_IDS_KEY, JSON.stringify(uniqueIds));
+  await AsyncStorage.setItem(LAST_LOAD_REFRESH_KEY, String(Date.now()));
+  return uniqueIds;
+}
+
+async function sendLocationForLoad(loadId: string, location: Location.LocationObject) {
+  const token = await AsyncStorage.getItem('userToken');
+  if (!token) return;
+
+  const coords = location.coords;
+  if (!coords || !Number.isFinite(coords.latitude) || !Number.isFinite(coords.longitude)) return;
+
   await fetch(`${API_BASE_URL}/api/mobile/loads/${loadId}/carrier-location`, {
     method: 'PUT',
     headers: {
-      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
-      lat: location.coords.latitude,
-      lon: location.coords.longitude,
-      accuracy: location.coords.accuracy,
-      heading: location.coords.heading,
-      speed: location.coords.speed,
+      lat: coords.latitude,
+      lon: coords.longitude,
+      accuracy: coords.accuracy ?? null,
+      heading: coords.heading ?? null,
+      speed: coords.speed ?? null,
     }),
   });
 }
 
-async function publishLocationForLoads(
-  token: string,
-  loadIds: number[],
-  location: Location.LocationObject
-) {
-  await Promise.all(loadIds.map((loadId) => publishLocation(token, loadId, location)));
+async function refreshTrackedCarrierLoadIds() {
+  const token = await AsyncStorage.getItem('userToken');
+  if (!token || !(await isCarrierUser())) {
+    await writeTrackedLoadIds([]);
+    return [] as string[];
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/mobile/offers-screen`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data: OffersScreenResponse = await response.json().catch(() => ({}));
+
+    if (!response.ok || data.mode !== 'carrier' || !Array.isArray(data.items)) {
+      await writeTrackedLoadIds([]);
+      return [];
+    }
+
+    const ids = data.items
+      .filter((item) => {
+        const status = String(item.status || '').toLowerCase();
+        const loadStatus = String(item.load_status || '').toLowerCase();
+        return status === 'accepted' && loadStatus !== 'completed' && !item.carrierCompleted;
+      })
+      .map((item) => item.loadId)
+      .filter((id) => id !== undefined && id !== null)
+      .map((id) => String(id));
+
+    return writeTrackedLoadIds(ids);
+  } catch (error) {
+    console.log('Refresh tracked carrier loads error:', error);
+    return readTrackedLoadIds();
+  }
 }
 
-if (!TaskManager.isTaskDefined(LOCATION_TASK_NAME)) {
-  TaskManager.defineTask<LocationTaskData>(LOCATION_TASK_NAME, async ({ data, error }) => {
-    if (error) {
-      console.log('Background location task error:', error);
-      return;
-    }
+async function refreshTrackedLoadsIfStale() {
+  const raw = await AsyncStorage.getItem(LAST_LOAD_REFRESH_KEY);
+  const lastRefresh = Number(raw || 0);
 
-    const location = data?.locations?.[data.locations.length - 1];
-    if (!location) return;
+  if (!Number.isFinite(lastRefresh) || Date.now() - lastRefresh > LOAD_REFRESH_INTERVAL_MS) {
+    return refreshTrackedCarrierLoadIds();
+  }
 
-    try {
-      const token = await getAuthToken();
-      if (!token) return;
+  return readTrackedLoadIds();
+}
 
-      const loadIds = await getActiveLoadIds(token);
-      if (loadIds.length) {
-        await publishLocationForLoads(token, loadIds, location);
-      }
-    } catch (taskError) {
-      console.log('Background location publish error:', taskError);
-    }
+export async function hasAcceptedLocationDisclosure() {
+  return (await AsyncStorage.getItem(LOCATION_DISCLOSURE_ACCEPTED_KEY)) === '1';
+}
+
+export async function acceptLocationDisclosure() {
+  await AsyncStorage.setItem(LOCATION_DISCLOSURE_ACCEPTED_KEY, '1');
+}
+
+async function ensureForegroundLocationPermission() {
+  if (Platform.OS === 'web') return false;
+  if (!(await hasAcceptedLocationDisclosure())) return false;
+
+  const foregroundStatus = await Location.getForegroundPermissionsAsync();
+  const foreground = foregroundStatus.status === Location.PermissionStatus.GRANTED
+    ? foregroundStatus
+    : foregroundStatus.canAskAgain
+      ? await Location.requestForegroundPermissionsAsync()
+      : foregroundStatus;
+
+  return foreground.status === Location.PermissionStatus.GRANTED;
+}
+
+async function getCurrentForegroundLocation() {
+  if (!(await ensureForegroundLocationPermission())) return null;
+
+  return Location.getCurrentPositionAsync({
+    accuracy: Location.Accuracy.High,
   });
 }
 
 export async function publishCurrentCarrierLocationForActiveLoads() {
-  const token = await getAuthToken();
-  if (!token) return;
+  if (Platform.OS === 'web') return false;
 
-  const permission = await Location.getForegroundPermissionsAsync();
-  if (permission.status !== Location.PermissionStatus.GRANTED) return;
+  const token = await AsyncStorage.getItem('userToken');
+  if (!token || !(await isCarrierUser())) return false;
 
-  const location = await Location.getCurrentPositionAsync({
-    accuracy: Location.Accuracy.Balanced,
-  });
-  const loadIds = await getActiveLoadIds(token);
+  const loadIds = await refreshTrackedCarrierLoadIds();
+  if (!loadIds.length) return false;
 
-  if (loadIds.length) {
-    await publishLocationForLoads(token, loadIds, location);
-  }
+  const location = await getCurrentForegroundLocation();
+  if (!location) return false;
+
+  await Promise.all(loadIds.map((loadId) => sendLocationForLoad(loadId, location).catch((error) => {
+    console.log('Carrier location upload error:', error);
+  })));
+
+  return true;
 }
 
 export async function startPersistentLocationTracking() {
-  const token = await getAuthToken();
-  if (!token) return;
+  return publishCurrentCarrierLocationForActiveLoads();
+}
 
-  const foreground = await Location.requestForegroundPermissionsAsync();
-  if (foreground.status !== Location.PermissionStatus.GRANTED) return;
+export async function stopPersistentLocationTracking() {
+  if (Platform.OS !== 'web') {
+    const started = await Location.hasStartedLocationUpdatesAsync(LEGACY_LOCATION_TASK_NAME).catch(() => false);
+    if (started) {
+      await Location.stopLocationUpdatesAsync(LEGACY_LOCATION_TASK_NAME).catch((error) => {
+        console.log('Stop legacy background location error:', error);
+      });
+    }
+  }
 
-  const background = await Location.requestBackgroundPermissionsAsync();
-  if (background.status !== Location.PermissionStatus.GRANTED) return;
-
-  const loadIds = await getActiveLoadIds(token);
-  if (!loadIds.length) return;
-
-  const alreadyRunning = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
-  if (alreadyRunning) return;
-
-  await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-    accuracy: Location.Accuracy.Balanced,
-    distanceInterval: 100,
-    deferredUpdatesInterval: 120000,
-    deferredUpdatesDistance: 100,
-    pausesUpdatesAutomatically: true,
-    activityType: Location.ActivityType.AutomotiveNavigation,
-    showsBackgroundLocationIndicator: true,
-    foregroundService: {
-      notificationTitle: 'RouteHub tracking is active',
-      notificationBody: 'Your active cargo route is being updated.',
-    },
-  });
+  await writeTrackedLoadIds([]);
 }
 
 export async function syncPersistentLocationTracking() {
-  const token = await getAuthToken();
-  if (!token) {
+  const token = await AsyncStorage.getItem('userToken');
+  if (!token || !(await isCarrierUser())) {
     await stopPersistentLocationTracking();
-    return;
+    return false;
   }
 
-  const loadIds = await getActiveLoadIds(token);
-  if (!loadIds.length) {
-    await stopPersistentLocationTracking();
-    return;
-  }
-
-  const foreground = await Location.getForegroundPermissionsAsync();
-  const background = await Location.getBackgroundPermissionsAsync();
-  if (
-    foreground.status !== Location.PermissionStatus.GRANTED ||
-    background.status !== Location.PermissionStatus.GRANTED
-  ) {
-    return;
-  }
-
-  const alreadyRunning = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
-  if (!alreadyRunning) {
-    await startPersistentLocationTracking();
-  }
+  await refreshTrackedLoadsIfStale();
+  return publishCurrentCarrierLocationForActiveLoads();
 }
-export async function stopPersistentLocationTracking() {
-  const alreadyRunning = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
-  if (alreadyRunning) {
-    await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
-  }
-}
-
-export { LOCATION_TASK_NAME };

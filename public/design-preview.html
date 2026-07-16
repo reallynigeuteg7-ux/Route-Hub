@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RouteHub Design Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-preview.css" />
+</head>
+<body>
+  <header class="preview-top">
+    <a class="preview-brand" href="index.html" aria-label="RouteHub">
+      <img src="images/logo.png" alt="RouteHub" />
+      <span>Design Preview</span>
+    </a>
+    <nav class="preview-tabs" aria-label="Варианты дизайна">
+      <a href="#ops">Операционный</a>
+      <a href="#night">Тёмный</a>
+      <a href="#field">Карта</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="variant variant-ops" id="ops">
+      <div class="variant-wrap">
+        <div class="variant-title">
+          <span>Вариант 1</span>
+          <h1>Операционный интерфейс</h1>
+          <p>Светлый, плотный, быстрый для ежедневной работы: заявки, фильтры, статусы и действия видны сразу.</p>
+        </div>
+
+        <div class="ops-shell">
+          <aside class="ops-side">
+            <img src="images/logo.png" alt="RouteHub" />
+            <a class="active" href="#">Грузы</a>
+            <a href="#">Перевозчики</a>
+            <a href="#">Ставки</a>
+            <a href="#">Финансы</a>
+          </aside>
+
+          <div class="ops-main">
+            <div class="ops-toolbar">
+              <div>
+                <span>Рабочий стол</span>
+                <strong>Активные грузы</strong>
+              </div>
+              <button type="button">Добавить груз</button>
+            </div>
+
+            <div class="ops-filters">
+              <label>Откуда<select><option>Алматы</option></select></label>
+              <label>Куда<select><option>Астана</option></select></label>
+              <label>Тип<select><option>Тент</option></select></label>
+              <label>Дата<input type="date" value="2026-06-01" /></label>
+            </div>
+
+            <div class="ops-grid">
+              <article class="ops-load primary">
+                <div class="load-status">Открыт</div>
+                <h2>Алматы → Астана</h2>
+                <div class="load-price">520 000 ₸</div>
+                <p>Тент, 20 т, боковая загрузка</p>
+                <div class="load-actions"><button type="button">Открыть</button><button type="button">Ставки</button></div>
+              </article>
+              <article class="ops-load">
+                <div class="load-status blue">Новая ставка</div>
+                <h2>Шымкент → Караганда</h2>
+                <div class="load-price">310 000 ₸</div>
+                <p>Рефрижератор, 12 т</p>
+              </article>
+              <article class="ops-load">
+                <div class="load-status amber">В пути</div>
+                <h2>Актобе → Алматы</h2>
+                <div class="load-price">690 000 ₸</div>
+                <p>Контейнер, 18 т</p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="variant variant-night" id="night">
+      <div class="variant-wrap">
+        <div class="variant-title invert">
+          <span>Вариант 2</span>
+          <h1>Тёмная диспетчерская</h1>
+          <p>Контрастный вид для перевозчиков: маршруты, цены, карта и предложения читаются с первого взгляда.</p>
+        </div>
+
+        <div class="night-shell">
+          <div class="night-hero">
+            <div class="night-copy">
+              <img src="images/logowhite.PNG" alt="RouteHub" />
+              <h2>Грузы по Казахстану</h2>
+              <p>Поиск рейсов, быстрые ставки и контроль маршрутов без лишнего шума.</p>
+              <div class="night-actions"><button type="button">Найти груз</button><button type="button">Карта</button></div>
+            </div>
+            <div class="route-board">
+              <div class="board-head"><span>Маршрут</span><b>live</b></div>
+              <div class="route-big">Алматы <i></i> Астана</div>
+              <div class="route-stats"><span>20 т</span><span>Тент</span><span>520 000 ₸</span></div>
+            </div>
+          </div>
+
+          <div class="night-panels">
+            <div class="night-filter">
+              <button type="button" class="selected">Все</button>
+              <button type="button">Попутные</button>
+              <button type="button">С высокой ценой</button>
+              <button type="button">Сегодня</button>
+            </div>
+            <div class="night-list">
+              <article><strong>Караганда → Павлодар</strong><span>Фура, 82 м³</span><b>280 000 ₸</b></article>
+              <article><strong>Атырау → Актау</strong><span>Платформа, 14 т</span><b>190 000 ₸</b></article>
+              <article><strong>Астана → Алматы</strong><span>Рефка, 8 т</span><b>440 000 ₸</b></article>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="variant variant-field" id="field">
+      <div class="variant-wrap">
+        <div class="variant-title">
+          <span>Вариант 3</span>
+          <h1>Карта и доверие</h1>
+          <p>Более публичный стиль для главной: RouteHub сразу ощущается как сервис маршрутов, сделок и проверенных участников.</p>
+        </div>
+
+        <div class="field-shell">
+          <div class="field-hero">
+            <div class="field-glass">
+              <img src="images/logo.png" alt="RouteHub" />
+              <h2>Найти груз или перевозчика</h2>
+              <div class="field-search">
+                <label>Откуда<select><option>Алматы</option></select></label>
+                <label>Куда<select><option>Астана</option></select></label>
+                <button type="button">Искать</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-content">
+            <article class="field-card accent">
+              <span>Ставка</span>
+              <strong>520 000 ₸</strong>
+              <p>Алматы → Астана, тент, 20 т</p>
+            </article>
+            <article class="field-card">
+              <span>Перевозчик</span>
+              <strong>ТОО TransLine</strong>
+              <p>Рейтинг 4.9, 34 рейса</p>
+            </article>
+            <article class="field-card">
+              <span>Сделка</span>
+              <strong>Безопасная оплата</strong>
+              <p>Баланс, ставки и чат в одном месте</p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -5,7 +5,7 @@
   const label = document.getElementById('profile-theme-label');
 
   function getTheme() {
-    return root.dataset.theme === 'light' ? 'light' : 'dark';
+    return root.dataset.theme === 'dark' ? 'dark' : 'light';
   }
 
   function applyTheme(theme) {
@@ -19,7 +19,7 @@
     }
 
     if (label) {
-      label.textContent = safeTheme === 'light' ? 'Белая' : 'Тёмная';
+      label.textContent = safeTheme === 'light' ? 'Светлая' : 'Тёмная';
     }
   }
 

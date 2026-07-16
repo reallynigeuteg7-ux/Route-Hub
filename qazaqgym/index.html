@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Учет абонементов</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <img class="hero-logo" src="logo.png" alt="QAZAQ GYM" />
+      <p class="eyebrow">простой локальный сайт</p>
+      <h1>Учет абонементов спортзала</h1>
+      <p class="subtitle">Добавляй новых клиентов, смотри даты, остаток посещений и импортируй данные из Excel.</p>
+
+      <div class="hero-actions">
+        <button id="exportBtn" class="ghost-btn" type="button">Экспорт JSON</button>
+
+        <label class="ghost-btn import-label">
+          Импорт JSON
+          <input id="importInput" type="file" accept="application/json" hidden>
+        </label>
+
+        <label class="primary-btn import-label">
+          Импорт Excel
+          <input id="excelImportInput" type="file" accept=".xlsx,.xls,.csv" hidden>
+        </label>
+      </div>
+    </header>
+
+    <section class="stats-grid" aria-label="Сводка">
+      <article class="stat-card">
+        <span>Всего клиентов</span>
+        <strong id="totalCount">0</strong>
+      </article>
+      <article class="stat-card">
+        <span>Активные</span>
+        <strong id="activeCount">0</strong>
+      </article>
+      <article class="stat-card warning">
+        <span>Скоро истекают</span>
+        <strong id="soonCount">0</strong>
+      </article>
+      <article class="stat-card danger">
+        <span>Проблемные</span>
+        <strong id="problemCount">0</strong>
+      </article>
+    </section>
+
+    <main class="content-grid">
+      <section class="panel form-panel">
+        <div class="panel-head">
+          <h2 id="formTitle">Новый абонемент</h2>
+          <p>Добавляй, редактируй и продлевай записи.</p>
+        </div>
+
+        <form id="subscriptionForm" class="subscription-form">
+          <input type="hidden" id="subscriptionId" />
+
+          <label>
+            <span>ID</span>
+            <input id="externalId" name="externalId" type="number" min="1" step="1" placeholder="Например: 125" />
+          </label>
+
+          <label>
+            <span>Имя Фамилия</span>
+            <input id="fullName" name="fullName" type="text" placeholder="Например: Адиль Нуржан" required />
+          </label>
+
+          <div class="two-columns">
+            <label>
+              <span>Дата от</span>
+              <input id="dateFrom" name="dateFrom" type="date" required />
+            </label>
+
+            <label>
+              <span>Дата до</span>
+              <input id="dateTo" name="dateTo" type="date" required />
+            </label>
+          </div>
+
+          <div class="two-columns">
+            <label>
+              <span>Осталось посещений</span>
+              <input id="visitsLeft" name="visitsLeft" type="number" min="0" step="1" placeholder="12" required />
+            </label>
+
+            <label>
+              <span>Всего посещений</span>
+              <input id="totalVisits" name="totalVisits" type="number" min="1" step="1" placeholder="12" required />
+            </label>
+          </div>
+
+          <label>
+            <span>Комментарий</span>
+            <textarea id="notes" name="notes" rows="4" placeholder="Необязательно"></textarea>
+          </label>
+
+          <div class="form-actions">
+            <button class="primary-btn" type="submit" id="saveBtn">Сохранить</button>
+            <button class="ghost-btn" type="button" id="resetBtn">Очистить</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel table-panel">
+        <div class="panel-head row-between">
+          <div>
+            <h2>Список абонементов</h2>
+            <p>Поиск, фильтр и быстрые действия.</p>
+          </div>
+          <div class="filters">
+            <input id="searchInput" type="search" placeholder="Поиск по имени..." />
+            <select id="statusFilter">
+              <option value="all">Все</option>
+              <option value="active">Активные</option>
+              <option value="soon">Скоро истекают</option>
+              <option value="expired">Истекшие</option>
+              <option value="no_visits">Без посещений</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Клиент</th>
+                <th>Дата от</th>
+                <th>Дата до</th>
+                <th>Посещения</th>
+                <th>Статус</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody id="subscriptionsTable"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="emptyStateTemplate">
+    <tr>
+      <td colspan="7">
+        <div class="empty-state">
+          <h3>Пока пусто</h3>
+          <p>Добавь первый абонемент через форму или импортируй Excel.</p>
+        </div>
+      </td>
+    </tr>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>

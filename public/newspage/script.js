@@ -91,3 +91,28 @@ function escapeHtml(str) {
 
 document.addEventListener('DOMContentLoaded', updateNavbar);
 
+
+
+const newsDetails = [
+  'RouteHub расширяет карту покрытия и добавляет новые направления для перевозчиков.',
+  'Публикация о цифровой обработке документов и обновлении процессов работы с заказами.',
+  'Новые критерии рейтинга помогают оценивать надёжность участников перевозки.'
+];
+
+document.querySelectorAll('.btn-read').forEach((link, index) => {
+  link.addEventListener('click', (event) => {
+    event.preventDefault();
+    const card = link.closest('.news-card');
+    const title = card?.querySelector('h3')?.textContent?.trim() || 'Новость RouteHub';
+    window.alert(`${title}\n\n${newsDetails[index] || 'Подробности скоро появятся.'}`);
+  });
+});
+
+document.querySelector('.read-more')?.addEventListener('click', (event) => {
+  event.preventDefault();
+  window.alert('Программа поддержки молодых специалистов: подробности можно уточнить у команды RouteHub.');
+});
+
+document.querySelector('.card-actions .btn-ghost')?.addEventListener('click', () => {
+  window.location.href = '../login.html?mode=register';
+});
