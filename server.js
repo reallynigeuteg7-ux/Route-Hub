@@ -21,7 +21,11 @@ const EMAIL_PASS = String(process.env.EMAIL_PASS || '').replace(/\s+/g, '');
 let lastEmailSendError = null;
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    requireTLS: true,
+    family: 4,
     connectionTimeout: 10000,
     greetingTimeout: 10000,
     socketTimeout: 10000,
