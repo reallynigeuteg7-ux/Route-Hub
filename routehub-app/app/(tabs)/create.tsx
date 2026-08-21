@@ -60,7 +60,9 @@ const LOADING_TYPES = [
   'Ручная',
 ];
 
-type DropdownType = 'from' | 'to' | 'truck' | 'loading' | null;
+const CURRENCY_TYPES = ['KZT', 'SOL'];
+
+type DropdownType = 'from' | 'to' | 'truck' | 'loading' | 'currency' | null;
 
 const FIELD_HEIGHT = 52;
 
@@ -89,6 +91,7 @@ const [fromLocation, setFromLocation] = useState('');
   const [height, setHeight] = useState('');
 
   const [loadingType, setLoadingType] = useState('');
+  const [currency, setCurrency] = useState('KZT');
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
 
@@ -114,6 +117,7 @@ const [fromLocation, setFromLocation] = useState('');
     setWidth('');
     setHeight('');
     setLoadingType('');
+    setCurrency('KZT');
     setPrice('');
     setDescription('');
     setOpenDropdown(null);
@@ -174,6 +178,7 @@ const [fromLocation, setFromLocation] = useState('');
           weight: Number(weight) || 0,
           type: truckType.trim(),
           price: Number(price) || 0,
+          currency,
           lat: 0,
           lng: 0,
           volume: volume.trim() ? Number(volume) : null,
@@ -479,6 +484,22 @@ const renderDropdown = (
                   <Text style={styles.sectionTitle}>Условия и оплата</Text>
                 </View>
 
+                <View style={styles.inputWrap}>
+                  <Text style={styles.label}>Валюта ставки</Text>
+                  <TouchableOpacity
+                    style={styles.selectInput}
+                    activeOpacity={0.85}
+                    onPress={() => setOpenDropdown(openDropdown === 'currency' ? null : 'currency')}
+                  >
+                    <Text style={styles.selectText}>{currency === 'SOL' ? 'Solana (SOL)' : 'Тенге (KZT)'}</Text>
+                    <Text style={styles.selectArrow}>⌄</Text>
+                  </TouchableOpacity>
+                  {renderDropdown(openDropdown === 'currency', CURRENCY_TYPES, (value) => {
+                    setCurrency(value);
+                    setPrice('');
+                  })}
+                </View>
+
                 <View style={styles.row}>
                   <View
                     style={[
@@ -515,11 +536,11 @@ const renderDropdown = (
                   </View>
 
                   <View style={[styles.inputWrap, styles.halfBlock]}>
-                    <Text style={styles.label}>Ставка ₸</Text>
+                    <Text style={styles.label}>Ставка {currency === 'SOL' ? 'SOL' : '₸'}</Text>
                     <TextInput
                       value={price}
                       onChangeText={setPrice}
-                      placeholder="50000"
+                      placeholder={currency === 'SOL' ? '0.1' : '50000'}
                       placeholderTextColor={colors.mutedText}
                       style={styles.input}
                       keyboardType="numeric"

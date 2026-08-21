@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { API_BASE_URL } from '../lib/api';
 import { goBackOrFallback } from '../lib/navigation';
+import { useAppTheme } from '../lib/theme';
 
 type AiLoad = {
   id: number;
@@ -52,6 +53,8 @@ const INITIAL_MESSAGE =
   'Я RouteHub AI. Могу помочь с поиском грузов, вашими публикациями и вопросами по сервису.';
 
 export default function SupportScreen() {
+  const { colors } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const scrollRef = useRef<ScrollView | null>(null);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -204,7 +207,7 @@ export default function SupportScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={colors.statusBar} />
       <KeyboardAvoidingView
         style={styles.keyboard}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -317,7 +320,7 @@ export default function SupportScreen() {
                 value={input}
                 onChangeText={setInput}
                 placeholder="Напишите вопрос для AI"
-                placeholderTextColor="#6B7280"
+                placeholderTextColor={colors.mutedText}
                 style={styles.input}
                 multiline
               />
@@ -364,17 +367,17 @@ export default function SupportScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#081120',
+    backgroundColor: colors.background,
   },
   keyboard: {
     flex: 1,
   },
   scroll: {
     flex: 1,
-    backgroundColor: '#081120',
+    backgroundColor: colors.background,
   },
   scrollContent: {
     paddingBottom: 28,
@@ -384,39 +387,39 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   back: {
-    color: '#38BDF8',
+    color: colors.primarySoft,
     fontSize: 16,
     fontWeight: '700',
     marginBottom: 16,
   },
   pageTitle: {
-    color: '#FFFFFF',
+    color: colors.text,
     fontSize: 30,
     fontWeight: '900',
     marginBottom: 6,
   },
   pageSubtitle: {
-    color: '#94A3B8',
+    color: colors.mutedText,
     fontSize: 15,
     lineHeight: 22,
     marginBottom: 20,
   },
   heroCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.surface,
     borderRadius: 24,
     padding: 18,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: colors.border,
     marginBottom: 16,
   },
   heroTitle: {
-    color: '#FFFFFF',
+    color: colors.text,
     fontSize: 20,
     fontWeight: '900',
     marginBottom: 8,
   },
   heroText: {
-    color: '#94A3B8',
+    color: colors.mutedText,
     fontSize: 14,
     lineHeight: 22,
   },
@@ -427,24 +430,24 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   quickButton: {
-    backgroundColor: 'rgba(56,189,248,0.12)',
+    backgroundColor: colors.surfaceStrong,
     borderWidth: 1,
-    borderColor: 'rgba(56,189,248,0.25)',
+    borderColor: colors.primarySoft,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   quickButtonText: {
-    color: '#BAE6FD',
+    color: colors.primary,
     fontSize: 13,
     fontWeight: '700',
   },
   chatCard: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: colors.surface,
     borderRadius: 24,
     padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: colors.border,
     marginBottom: 14,
     gap: 12,
   },
@@ -453,12 +456,12 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   userBubble: {
-    backgroundColor: 'rgba(47,128,237,0.18)',
+    backgroundColor: colors.primary,
     alignSelf: 'flex-end',
     maxWidth: '88%',
   },
   assistantBubble: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: colors.surfaceStrong,
   },
   messageText: {
     fontSize: 14,
@@ -468,18 +471,18 @@ const styles = StyleSheet.create({
     color: '#F0FDF4',
   },
   assistantMessageText: {
-    color: '#E2E8F0',
+    color: colors.text,
   },
   loadsList: {
     marginTop: 12,
     gap: 10,
   },
   loadCard: {
-    backgroundColor: 'rgba(8,17,32,0.75)',
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: colors.border,
   },
   loadTop: {
     flexDirection: 'row',
@@ -490,17 +493,17 @@ const styles = StyleSheet.create({
   },
   loadRoute: {
     flex: 1,
-    color: '#FFFFFF',
+    color: colors.text,
     fontSize: 15,
     fontWeight: '800',
   },
   loadPrice: {
-    color: '#2F80ED',
+    color: colors.primary,
     fontSize: 14,
     fontWeight: '800',
   },
   loadType: {
-    color: '#CBD5E1',
+    color: colors.mutedText,
     fontSize: 13,
     marginBottom: 10,
   },
@@ -508,27 +511,27 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   loadTag: {
-    color: '#94A3B8',
+    color: colors.mutedText,
     fontSize: 12,
     fontWeight: '700',
   },
   inputWrap: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: colors.border,
     marginBottom: 22,
   },
   input: {
     minHeight: 88,
-    color: '#FFFFFF',
+    color: colors.text,
     fontSize: 15,
     textAlignVertical: 'top',
     marginBottom: 12,
   },
   sendButton: {
-    backgroundColor: '#2F80ED',
+    backgroundColor: colors.primary,
     borderRadius: 16,
     paddingVertical: 15,
     alignItems: 'center',
@@ -545,46 +548,46 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   sectionTitle: {
-    color: '#FFFFFF',
+    color: colors.text,
     fontSize: 18,
     fontWeight: '800',
     marginBottom: 12,
   },
   contactCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: colors.border,
     marginBottom: 12,
   },
   contactLabel: {
-    color: '#94A3B8',
+    color: colors.mutedText,
     fontSize: 13,
     fontWeight: '700',
     marginBottom: 6,
   },
   contactValue: {
-    color: '#FFFFFF',
+    color: colors.text,
     fontSize: 16,
     fontWeight: '800',
   },
   faqCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: colors.border,
     marginBottom: 12,
   },
   faqTitle: {
-    color: '#FFFFFF',
+    color: colors.text,
     fontSize: 16,
     fontWeight: '800',
     marginBottom: 6,
   },
   faqText: {
-    color: '#94A3B8',
+    color: colors.mutedText,
     fontSize: 13,
     lineHeight: 20,
   },

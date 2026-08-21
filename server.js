@@ -12,6 +12,8 @@ const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
 const nodemailer = require('nodemailer');
 const OpenAI = require('openai');
+const crypto = require('crypto');
+const { Connection, Keypair, PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction, LAMPORTS_PER_SOL } = require('@solana/web3.js');
 
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
@@ -226,6 +228,157 @@ const pool = new Pool({
     idleTimeoutMillis: 30000
 });
 
+// Devnet-only Solana top-ups. These funds are intentionally kept separate from
+// the existing KZT wallet/escrow ledger until a production settlement model is
+// chosen. The Helius key is read only from the server environment.
+const DEVNET_SOLANA_WALLET = String(process.env.ROUTEHUB_SOLANA_DEVNET_WALLET || '').trim();
+const HELIUS_API_KEY = String(process.env.HELIUS_API_KEY || '').trim();
+const HELIUS_DEVNET_RPC_URL = HELIUS_API_KEY
+    ? `https://devnet.helius-rpc.com/?api-key=${encodeURIComponent(HELIUS_API_KEY)}`
+    : '';
+const ROUTEHUB_SOLANA_DEVNET_PRIVATE_KEY = String(process.env.ROUTEHUB_SOLANA_DEVNET_PRIVATE_KEY || '').trim();
+const DEVNET_SOLANA_PAYOUT_WALLET = String(process.env.ROUTEHUB_SOLANA_DEVNET_PAYOUT_WALLET || DEVNET_SOLANA_WALLET).trim();
+const SOLANA_DEVNET_WEBHOOK_AUTH = String(process.env.SOLANA_DEVNET_WEBHOOK_AUTH || '').trim();
+const SOLANA_DEVNET_MIN_SOL = 0.000001;
+const SOLANA_DEVNET_MAX_SOL = 1000;
+const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+function base58Encode(buffer) {
+    let value = BigInt('0x' + Buffer.from(buffer).toString('hex'));
+    let output = '';
+    while (value > 0n) {
+        const remainder = Number(value % 58n);
+        output = BASE58_ALPHABET[remainder] + output;
+        value /= 58n;
+    }
+    for (const byte of buffer) {
+        if (byte !== 0) break;
+        output = '1' + output;
+    }
+    return output || '1';
+}
+
+function createSolanaReference() {
+    return base58Encode(crypto.randomBytes(32));
+}
+
+function solToLamports(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return null;
+    return BigInt(Math.round(numeric * 1_000_000_000));
+}
+
+function lamportsToSol(value) {
+    const numeric = typeof value === 'bigint' ? Number(value) : Number(value || 0);
+    return Number.isFinite(numeric) ? numeric / 1_000_000_000 : 0;
+}
+
+function isValidSolanaAddress(value) {
+    const address = String(value || '').trim();
+    return address.length >= 32 && address.length <= 44 && /^[1-9A-HJ-NP-Za-km-z]+$/.test(address);
+}
+
+function decodeSolanaSecretKey(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return null;
+    try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return Uint8Array.from(parsed);
+    } catch (_) {}
+    if (/^\d+(,\d+){63}$/.test(raw)) return Uint8Array.from(raw.split(',').map((item) => Number(item)));
+    if (/^[1-9A-HJ-NP-Za-km-z]+$/.test(raw)) {
+        let valueBigInt = 0n;
+        for (const char of raw) {
+            const index = BASE58_ALPHABET.indexOf(char);
+            if (index < 0) return null;
+            valueBigInt = valueBigInt * 58n + BigInt(index);
+        }
+        const bytes = [];
+        while (valueBigInt > 0n) {
+            bytes.unshift(Number(valueBigInt & 255n));
+            valueBigInt >>= 8n;
+        }
+        for (const char of raw) {
+            if (char !== '1') break;
+            bytes.unshift(0);
+        }
+        return Uint8Array.from(bytes);
+    }
+    return null;
+}
+
+function getDevnetPayoutKeypair() {
+    const secretKey = decodeSolanaSecretKey(ROUTEHUB_SOLANA_DEVNET_PRIVATE_KEY);
+    if (!secretKey || secretKey.length !== 64) {
+        throw new Error('Автоматический вывод не настроен: задайте ROUTEHUB_SOLANA_DEVNET_PRIVATE_KEY на сервере');
+    }
+    const keypair = Keypair.fromSecretKey(secretKey);
+    if (DEVNET_SOLANA_WALLET && keypair.publicKey.toBase58() !== DEVNET_SOLANA_PAYOUT_WALLET) {
+        throw new Error('Приватный ключ не соответствует ROUTEHUB_SOLANA_DEVNET_WALLET');
+    }
+    return keypair;
+}
+
+async function sendDevnetSolPayout({ amount, walletAddress }) {
+    const keypair = getDevnetPayoutKeypair();
+    const recipient = new PublicKey(walletAddress);
+    const lamports = Math.floor(Number(amount) * LAMPORTS_PER_SOL);
+    if (!Number.isSafeInteger(lamports) || lamports <= 0) throw new Error('Некорректная сумма SOL');
+    const connection = new Connection(HELIUS_DEVNET_RPC_URL || 'https://api.devnet.solana.com', 'confirmed');
+    const treasuryBalance = await connection.getBalance(keypair.publicKey, 'confirmed');
+    const feeReserve = 5000;
+    if (treasuryBalance < lamports + feeReserve) {
+        throw new Error('На кошельке RouteHub недостаточно SOL для выплаты и комиссии');
+    }
+    const transaction = new Transaction().add(SystemProgram.transfer({
+        fromPubkey: keypair.publicKey,
+        toPubkey: recipient,
+        lamports
+    }));
+    return sendAndConfirmTransaction(connection, transaction, [keypair], { commitment: 'confirmed' });
+}
+
+async function completeDevnetSolWithdrawRequest({ requestId, userId, amount, signature }) {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const result = await client.query('SELECT status FROM wallet_withdraw_requests WHERE id = $1 AND "userId" = $2 FOR UPDATE', [requestId, userId]);
+        if (!result.rows[0] || result.rows[0].status !== 'pending') throw new Error('Заявка на вывод уже обработана');
+        await ensureWallet(client, userId, { lock: true });
+        await client.query('UPDATE wallets SET "devnetSolHeldBalance" = GREATEST("devnetSolHeldBalance" - $1, 0), "updatedAt" = CURRENT_TIMESTAMP WHERE "userId" = $2', [amount, userId]);
+        await client.query('UPDATE wallet_withdraw_requests SET status = $1, "providerPaymentId" = $2, "adminComment" = $3, "reviewedAt" = CURRENT_TIMESTAMP, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $4', ['approved', signature, 'Автоматическая выплата. Транзакция: ' + signature, requestId]);
+        await addWalletTransaction(client, { userId, type: 'withdraw_completed', amount: 0, currency: 'SOL', description: 'SOL отправлен автоматически. Транзакция: ' + signature, providerPaymentId: signature });
+        await client.query('COMMIT');
+    } catch (err) {
+        try { await client.query('ROLLBACK'); } catch (_) {}
+        throw err;
+    } finally {
+        client.release();
+    }
+}
+
+async function refundFailedDevnetSolWithdrawRequest({ requestId, userId, amount, reason }) {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const result = await client.query('SELECT status FROM wallet_withdraw_requests WHERE id = $1 AND "userId" = $2 FOR UPDATE', [requestId, userId]);
+        if (!result.rows[0] || result.rows[0].status !== 'pending') {
+            await client.query('ROLLBACK');
+            return;
+        }
+        await ensureWallet(client, userId, { lock: true });
+        await client.query('UPDATE wallets SET "devnetSolHeldBalance" = GREATEST("devnetSolHeldBalance" - $1, 0), "devnetSolBalance" = "devnetSolBalance" + $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "userId" = $2', [amount, userId]);
+        await client.query('UPDATE wallet_withdraw_requests SET status = $1, "adminComment" = $2, "reviewedAt" = CURRENT_TIMESTAMP, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $3', ['rejected', 'Автоматический вывод отменён: ' + String(reason || 'неизвестная ошибка').slice(0, 400), requestId]);
+        await addWalletTransaction(client, { userId, type: 'withdraw_refund', amount, currency: 'SOL', description: 'Возврат SOL после ошибки автоматического вывода #' + requestId });
+        await client.query('COMMIT');
+    } catch (err) {
+        try { await client.query('ROLLBACK'); } catch (_) {}
+        throw err;
+    } finally {
+        client.release();
+    }
+}
+
 pool.on('error', (err) => {
     console.error('PostgreSQL pool error:', err);
 });
@@ -318,10 +471,17 @@ function validateLoadPayload(body = {}) {
         return { ok: false, error: 'Выбери дату готовности к погрузке' };
     }
 
+    const currency = String(body.currency || 'KZT').trim().toUpperCase();
+    if (!['KZT', 'SOL'].includes(currency)) {
+        return { ok: false, error: 'Выбери валюту KZT или SOL' };
+    }
+
     const weight = validateRequiredLoadNumber(body.weight, 'Вес', LOAD_LIMITS.minWeight, LOAD_LIMITS.maxWeight, 'т');
     if (!weight.ok) return weight;
 
-    const price = validateRequiredLoadNumber(body.price, 'Ставка', LOAD_LIMITS.minPrice, LOAD_LIMITS.maxPrice, '₸');
+    const price = currency === 'SOL'
+        ? validateRequiredLoadNumber(body.price, 'Ставка', 0.000001, 1000, 'SOL')
+        : validateRequiredLoadNumber(body.price, 'Ставка', LOAD_LIMITS.minPrice, LOAD_LIMITS.maxPrice, '₸');
     if (!price.ok) return price;
 
     const volume = validateOptionalLoadNumber(body.volume, 'Объём', LOAD_LIMITS.maxVolume, 'м³');
@@ -345,6 +505,7 @@ function validateLoadPayload(body = {}) {
             weight: weight.value,
             type: normalizeLoadText(body.type, 60),
             price: price.value,
+            currency,
             lat: Number.isFinite(Number(body.lat)) ? Number(body.lat) : 0,
             lng: Number.isFinite(Number(body.lng)) ? Number(body.lng) : 0,
             volume: volume.value,
@@ -632,6 +793,8 @@ async function initDb() {
     await query(`ALTER TABLE loads ADD COLUMN IF NOT EXISTS height DOUBLE PRECISION`);
     await query(`ALTER TABLE loads ADD COLUMN IF NOT EXISTS loading_type TEXT`);
     await query(`ALTER TABLE loads ADD COLUMN IF NOT EXISTS description TEXT`);
+    await query(`ALTER TABLE loads ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'KZT'`);
+    await query(`UPDATE loads SET currency = 'KZT' WHERE currency IS NULL OR currency = ''`);
     await query(`ALTER TABLE loads ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'open'`);
     await query(`ALTER TABLE loads ADD COLUMN IF NOT EXISTS "clientCompleted" BOOLEAN DEFAULT false`);
     await query(`ALTER TABLE loads ADD COLUMN IF NOT EXISTS "carrierCompleted" BOOLEAN DEFAULT false`);
@@ -782,6 +945,26 @@ async function initDb() {
     `);
     await query(`CREATE INDEX IF NOT EXISTS idx_wallet_topup_requests_user_id ON wallet_topup_requests ("userId")`);
     await query(`CREATE INDEX IF NOT EXISTS idx_wallet_topup_requests_status ON wallet_topup_requests (status)`);
+
+    await query(`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS "devnetSolBalance" NUMERIC(20,9) NOT NULL DEFAULT 0`);
+    await query(`ALTER TABLE wallet_withdraw_requests ALTER COLUMN amount TYPE NUMERIC(20,9)`);
+    await query(`ALTER TABLE wallet_withdraw_requests ADD COLUMN IF NOT EXISTS "providerPaymentId" TEXT`);
+    await query(`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS "devnetSolHeldBalance" NUMERIC(20,9) NOT NULL DEFAULT 0`);
+    await query(`ALTER TABLE wallet_transactions ALTER COLUMN amount TYPE NUMERIC(20,9)`);
+    await query(`
+        CREATE TABLE IF NOT EXISTS solana_devnet_topups (
+            id BIGSERIAL PRIMARY KEY,
+            "userId" BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            amount NUMERIC(20,9) NOT NULL,
+            reference TEXT NOT NULL UNIQUE,
+            status TEXT NOT NULL DEFAULT 'pending',
+            signature TEXT UNIQUE,
+            "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            "confirmedAt" TIMESTAMP NULL
+        )
+    `);
+    await query(`CREATE INDEX IF NOT EXISTS idx_solana_devnet_topups_user_id ON solana_devnet_topups ("userId")`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_solana_devnet_topups_status ON solana_devnet_topups (status)`);
 
     await query(`
         CREATE TABLE IF NOT EXISTS wallet_withdraw_requests (
@@ -1276,16 +1459,24 @@ function toMoney(value) {
     return Math.round(numeric * 100) / 100;
 }
 
-function calculateEscrowAmounts(amount) {
-    const safeAmount = toMoney(amount);
+function toCurrencyAmount(value, currency = 'KZT') {
+    const numeric = Number(value || 0);
+    if (!Number.isFinite(numeric)) return 0;
+    const precision = String(currency || 'KZT').toUpperCase() === 'SOL' ? 9 : 2;
+    const factor = 10 ** precision;
+    return Math.round(numeric * factor) / factor;
+}
+
+function calculateEscrowAmounts(amount, currency = 'KZT') {
+    const safeAmount = toCurrencyAmount(amount, currency);
     const safeRate = Number.isFinite(PLATFORM_COMMISSION_RATE) && PLATFORM_COMMISSION_RATE >= 0
         ? PLATFORM_COMMISSION_RATE
         : 0;
-    const commissionAmount = toMoney(safeAmount * safeRate);
+    const commissionAmount = toCurrencyAmount(safeAmount * safeRate, currency);
     return {
         amount: safeAmount,
         commissionAmount,
-        carrierAmount: toMoney(safeAmount - commissionAmount)
+        carrierAmount: toCurrencyAmount(safeAmount - commissionAmount, currency)
     };
 }
 
@@ -1307,8 +1498,254 @@ async function addWalletTransaction(db, { userId, loadId = null, offerId = null,
     await db.query(
         `INSERT INTO wallet_transactions ("userId", "loadId", "offerId", "escrowId", type, amount, currency, status, description, "providerPaymentId")
          VALUES ($1, $2, $3, $4, $5, $6, $7, 'completed', $8, $9)`,
-        [userId, loadId, offerId, escrowId, type, toMoney(amount), currency, description, providerPaymentId]
+        [userId, loadId, offerId, escrowId, type, toCurrencyAmount(amount, currency), currency, description, providerPaymentId]
     );
+}
+
+function buildDevnetSolPayment({ amount, reference }) {
+    const params = new URLSearchParams({
+        amount: String(amount),
+        reference,
+        label: 'RouteHub',
+        message: `Пополнение RouteHub #${reference.slice(0, 8)}`
+    });
+    return `solana:${DEVNET_SOLANA_WALLET}?${params.toString()}`;
+}
+
+async function createDevnetSolTopup(userId, body = {}) {
+    if (!DEVNET_SOLANA_WALLET) {
+        const error = new Error('Devnet SOL кошелёк ещё не настроен');
+        error.statusCode = 503;
+        throw error;
+    }
+    if (!HELIUS_API_KEY) {
+        const error = new Error('Helius API key ещё не настроен на сервере');
+        error.statusCode = 503;
+        throw error;
+    }
+
+    const amount = Number(String(body.amount ?? '').replace(',', '.'));
+    if (!Number.isFinite(amount) || amount < SOLANA_DEVNET_MIN_SOL || amount > SOLANA_DEVNET_MAX_SOL) {
+        const error = new Error(`Укажите сумму от ${SOLANA_DEVNET_MIN_SOL} до ${SOLANA_DEVNET_MAX_SOL} SOL`);
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const reference = createSolanaReference();
+    const row = await getOne(
+        `INSERT INTO solana_devnet_topups ("userId", amount, reference, status)
+         VALUES ($1, $2, $3, 'pending')
+         RETURNING id, amount::float AS amount, reference, status, "createdAt"`,
+        [userId, amount, reference]
+    );
+
+    return {
+        ...row,
+        network: 'devnet',
+        currency: 'SOL',
+        recipient: DEVNET_SOLANA_WALLET,
+        solanaPayUrl: buildDevnetSolPayment({ amount: row.amount, reference: row.reference }),
+        explorerUrl: `https://explorer.solana.com/address/${DEVNET_SOLANA_WALLET}?cluster=devnet`
+    };
+}
+
+async function getHeliusTransaction(signature) {
+    if (!HELIUS_DEVNET_RPC_URL || !signature) return null;
+    try {
+        const response = await fetch(HELIUS_DEVNET_RPC_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                id: `routehub-${Date.now()}`,
+                method: 'getTransaction',
+                params: [signature, { encoding: 'jsonParsed', commitment: 'confirmed', maxSupportedTransactionVersion: 0 }]
+            })
+        });
+        if (!response.ok) return null;
+        const payload = await response.json();
+        return payload?.result || null;
+    } catch (error) {
+        console.error('Helius getTransaction error:', error.message);
+        return null;
+    }
+}
+
+function transactionAccountKeys(transaction) {
+    const message = transaction?.transaction?.message || {};
+    const keys = (message.accountKeys || []).map((item) => typeof item === 'string' ? item : item?.pubkey).filter(Boolean);
+    const loaded = transaction?.meta?.loadedAddresses || {};
+    return keys.concat(loaded.writable || [], loaded.readonly || []);
+}
+
+function webhookNativeTransfers(event) {
+    return event?.nativeTransfers || event?.events?.nativeTransfers || [];
+}
+
+async function confirmDevnetTopupFromWebhook(event) {
+    const signature = String(event?.signature || event?.transactionSignature || '').trim();
+    if (!signature) return;
+
+    const transaction = await getHeliusTransaction(signature);
+    if (!transaction || transaction.meta?.err) return;
+
+    const accounts = transactionAccountKeys(transaction);
+    const candidates = await getMany(
+        `SELECT id, "userId", amount, reference
+         FROM solana_devnet_topups
+         WHERE status = 'pending' AND reference = ANY($1::text[])`,
+        [accounts]
+    );
+    if (!candidates.length) return;
+
+    const transfers = webhookNativeTransfers(event);
+    const txNativeTransfers = transfers.length ? transfers : [];
+    const transactionLamports = transaction?.meta?.postBalances && transaction?.meta?.preBalances
+        ? null
+        : null;
+
+    for (const candidate of candidates) {
+        const expectedLamports = solToLamports(candidate.amount);
+        const transferMatches = txNativeTransfers.some((transfer) => {
+            const destination = String(transfer?.toUserAccount || transfer?.to || '');
+            const amount = BigInt(String(transfer?.amount || 0));
+            return destination === DEVNET_SOLANA_WALLET && amount === expectedLamports;
+        });
+        if (!transferMatches || !accounts.includes(candidate.reference)) continue;
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const locked = await client.query(
+                `SELECT id, "userId", amount FROM solana_devnet_topups WHERE id = $1 AND status = 'pending' FOR UPDATE`,
+                [candidate.id]
+            );
+            const topup = locked.rows[0];
+            if (!topup) {
+                await client.query('ROLLBACK');
+                continue;
+            }
+            await client.query(
+                `UPDATE solana_devnet_topups SET status = 'confirmed', signature = $1, "confirmedAt" = CURRENT_TIMESTAMP WHERE id = $2`,
+                [signature, topup.id]
+            );
+            await client.query(
+                `UPDATE wallets SET "devnetSolBalance" = "devnetSolBalance" + $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "userId" = $2`,
+                [topup.amount, topup.userId]
+            );
+            await client.query(
+                `INSERT INTO wallet_transactions ("userId", type, amount, currency, status, description, "providerPaymentId")
+                 VALUES ($1, 'devnet_sol_topup', $2, 'SOL', 'completed', $3, $4)`,
+                [topup.userId, topup.amount, 'Пополнение Devnet SOL', signature]
+            );
+            await client.query('COMMIT');
+            console.log('Confirmed Devnet SOL top-up:', { topupId: topup.id, signature });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('Devnet SOL top-up confirmation error:', error.message);
+        } finally {
+            client.release();
+        }
+    }
+}
+
+async function processDevnetSolWebhook(payload) {
+    const events = Array.isArray(payload) ? payload : [payload];
+    for (const event of events) {
+        try {
+            await confirmDevnetTopupFromWebhook(event);
+        } catch (error) {
+            console.error('Devnet SOL webhook processing error:', error.message);
+        }
+    }
+}
+
+async function confirmDevnetTopupFromSignature(userId, topupId, signature) {
+    const topup = await getOne(
+        `SELECT id, "userId", amount, reference, status, signature FROM solana_devnet_topups
+         WHERE id = $1 AND "userId" = $2`,
+        [topupId, userId]
+    );
+    if (!topup) {
+        const error = new Error('Платёж не найден');
+        error.statusCode = 404;
+        throw error;
+    }
+    if (topup.status !== 'pending') {
+        return topup;
+    }
+    const transaction = await getHeliusTransaction(signature);
+    if (!transaction || transaction.meta?.err) {
+        const error = new Error('Транзакция ещё не подтверждена сетью');
+        error.statusCode = 409;
+        throw error;
+    }
+    const accounts = transactionAccountKeys(transaction);
+    if (!accounts.includes(topup.reference) || !accounts.includes(DEVNET_SOLANA_WALLET)) {
+        const error = new Error('Транзакция не содержит реквизиты RouteHub');
+        error.statusCode = 400;
+        throw error;
+    }
+    const recipientIndex = accounts.indexOf(DEVNET_SOLANA_WALLET);
+    const before = BigInt(transaction.meta?.preBalances?.[recipientIndex] || 0);
+    const after = BigInt(transaction.meta?.postBalances?.[recipientIndex] || 0);
+    const amount = after - before;
+    if (amount !== solToLamports(topup.amount)) {
+        const error = new Error('Сумма транзакции не совпадает с заявкой');
+        error.statusCode = 400;
+        throw error;
+    }
+    await confirmDevnetTopupFromWebhook({
+        signature,
+        nativeTransfers: [{ toUserAccount: DEVNET_SOLANA_WALLET, amount: String(amount) }]
+    });
+    return await getOne(
+        `SELECT id, amount::float AS amount, reference, status, signature, "confirmedAt"
+         FROM solana_devnet_topups WHERE id = $1`,
+        [topup.id]
+    );
+}
+
+async function ensureHeliusDevnetWebhook() {
+    if (!HELIUS_API_KEY || !DEVNET_SOLANA_WALLET || !SOLANA_DEVNET_WEBHOOK_AUTH) {
+        console.warn('Devnet SOL webhook is not configured: set HELIUS_API_KEY, ROUTEHUB_SOLANA_DEVNET_WALLET and SOLANA_DEVNET_WEBHOOK_AUTH');
+        return;
+    }
+
+    const siteUrl = String(process.env.SITE_URL || process.env.PUBLIC_URL || 'https://route.lunarteam.kz').replace(/\/+$/, '');
+    const webhookURL = `${siteUrl}/api/solana/devnet/webhook`;
+    const apiUrl = `https://api-devnet.helius-rpc.com/v0/webhooks?api-key=${encodeURIComponent(HELIUS_API_KEY)}`;
+
+    try {
+        const listResponse = await fetch(apiUrl);
+        const webhooks = listResponse.ok ? await listResponse.json() : [];
+        const existing = Array.isArray(webhooks) && webhooks.find((item) => item.webhookURL === webhookURL);
+        if (existing) {
+            console.log('Helius Devnet webhook already configured:', existing.webhookID);
+            return;
+        }
+
+        const createResponse = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                webhookURL,
+                transactionTypes: ['ANY'],
+                accountAddresses: [DEVNET_SOLANA_WALLET],
+                webhookType: 'enhancedDevnet',
+                authHeader: SOLANA_DEVNET_WEBHOOK_AUTH,
+                txnStatus: 'success'
+            })
+        });
+        const created = await createResponse.json().catch(() => ({}));
+        if (!createResponse.ok) {
+            console.error('Helius Devnet webhook creation failed:', createResponse.status, created);
+            return;
+        }
+        console.log('Helius Devnet webhook created:', created.webhookID || created);
+    } catch (error) {
+        console.error('Helius Devnet webhook setup error:', error.message);
+    }
 }
 
 async function getWalletPayload(userId) {
@@ -1332,8 +1769,16 @@ async function getWalletPayload(userId) {
         [userId]
     );
     const withdrawRequests = await getMany(
-        `SELECT id, amount::float AS amount, currency, status, "payoutDetails", "adminComment", "createdAt", "reviewedAt"
+        `SELECT id, amount::float AS amount, currency, status, "payoutDetails", "adminComment", "providerPaymentId", "createdAt", "reviewedAt"
          FROM wallet_withdraw_requests
+         WHERE "userId" = $1
+         ORDER BY id DESC
+         LIMIT 10`,
+        [userId]
+    );
+    const devnetSolTopups = await getMany(
+        `SELECT id, amount::float AS amount, reference, status, signature, "createdAt", "confirmedAt"
+         FROM solana_devnet_topups
          WHERE "userId" = $1
          ORDER BY id DESC
          LIMIT 10`,
@@ -1345,9 +1790,14 @@ async function getWalletPayload(userId) {
         heldBalance: toMoney(wallet.heldBalance),
         availableBalance: toMoney(wallet.balance),
         currency: wallet.currency || 'KZT',
+        devnetSolBalance: Number(wallet.devnetSolBalance || 0),
+        devnetSolHeldBalance: Number(wallet.devnetSolHeldBalance || 0),
+        devnetSolNetwork: 'devnet',
+        devnetSolRecipient: DEVNET_SOLANA_WALLET || null,
         transactions,
         topupRequests,
-        withdrawRequests
+        withdrawRequests,
+        devnetSolTopups
     };
 }
 
@@ -1363,7 +1813,13 @@ function getTopupPaymentDetails() {
         title: process.env.TOPUP_RECEIVER_NAME || TOPUP_PAYMENT_DETAILS.title,
         bank: process.env.TOPUP_BANK_NAME || TOPUP_PAYMENT_DETAILS.bank,
         account: process.env.TOPUP_ACCOUNT || TOPUP_PAYMENT_DETAILS.account,
-        comment: process.env.TOPUP_PAYMENT_COMMENT || TOPUP_PAYMENT_DETAILS.comment
+        comment: process.env.TOPUP_PAYMENT_COMMENT || TOPUP_PAYMENT_DETAILS.comment,
+        devnetSol: {
+            enabled: Boolean(DEVNET_SOLANA_WALLET && HELIUS_API_KEY),
+            network: 'devnet',
+            currency: 'SOL',
+            recipient: DEVNET_SOLANA_WALLET || null
+        }
     };
 }
 
@@ -1528,8 +1984,8 @@ async function sendWithdrawRequestEmail({ request, user }) {
     await sendEmail({
         to,
         subject: '\u041d\u043e\u0432\u0430\u044f \u0437\u0430\u044f\u0432\u043a\u0430 \u043d\u0430 \u0432\u044b\u0432\u043e\u0434 \u0441\u0440\u0435\u0434\u0441\u0442\u0432 RouteHub',
-        text: '\u041d\u043e\u0432\u0430\u044f \u0437\u0430\u044f\u0432\u043a\u0430 \u043d\u0430 \u0432\u044b\u0432\u043e\u0434: #' + request.id + ', ' + request.amount + ' KZT. \u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c: ' + (user.name || user.phone || user.email || user.id),
-        html: '<div style="font-family:Arial,sans-serif;color:#0f172a"><h2>\u041d\u043e\u0432\u0430\u044f \u0437\u0430\u044f\u0432\u043a\u0430 \u043d\u0430 \u0432\u044b\u0432\u043e\u0434</h2><p><b>\u0421\u0443\u043c\u043c\u0430:</b> ' + escapeEmailHtml(request.amount) + ' KZT</p><p><b>\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c:</b> ' + escapeEmailHtml(user.name || user.company || user.phone || user.email || user.id) + '</p><p><b>\u041a\u043e\u0434:</b> ' + escapeEmailHtml(user.user_code || '') + '</p><p><b>\u0420\u0435\u043a\u0432\u0438\u0437\u0438\u0442\u044b:</b><br>' + escapeEmailHtml(request.payoutDetails).replace(/\n/g, '<br>') + '</p></div>'
+        text: '\u041d\u043e\u0432\u0430\u044f \u0437\u0430\u044f\u0432\u043a\u0430 \u043d\u0430 \u0432\u044b\u0432\u043e\u0434: #' + request.id + ', ' + formatEmailMoney(request.amount, request.currency || 'KZT') + '. \u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c: ' + (user.name || user.phone || user.email || user.id),
+        html: '<div style="font-family:Arial,sans-serif;color:#0f172a"><h2>\u041d\u043e\u0432\u0430\u044f \u0437\u0430\u044f\u0432\u043a\u0430 \u043d\u0430 \u0432\u044b\u0432\u043e\u0434</h2><p><b>\u0421\u0443\u043c\u043c\u0430:</b> ' + escapeEmailHtml(formatEmailMoney(request.amount, request.currency || 'KZT')) + '</p><p><b>\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c:</b> ' + escapeEmailHtml(user.name || user.company || user.phone || user.email || user.id) + '</p><p><b>\u041a\u043e\u0434:</b> ' + escapeEmailHtml(user.user_code || '') + '</p><p><b>\u0420\u0435\u043a\u0432\u0438\u0437\u0438\u0442\u044b:</b><br>' + escapeEmailHtml(request.payoutDetails).replace(/\n/g, '<br>') + '</p></div>'
     });
 }
 
@@ -1558,163 +2014,162 @@ async function createWalletWithdrawRequest(userId, body = {}) {
     finally { client.release(); }
 }
 
+
+async function createDevnetSolWithdrawRequest(userId, body = {}) {
+    const amount = Number(body.amount);
+    const walletAddress = String(body.walletAddress || '').trim();
+    if (!Number.isFinite(amount) || amount < SOLANA_DEVNET_MIN_SOL || amount > SOLANA_DEVNET_MAX_SOL) {
+        const error = new Error('Укажите сумму от ' + SOLANA_DEVNET_MIN_SOL + ' до ' + SOLANA_DEVNET_MAX_SOL + ' SOL');
+        error.statusCode = 400;
+        throw error;
+    }
+    if (!isValidSolanaAddress(walletAddress)) {
+        const error = new Error('Укажите корректный Solana-адрес кошелька');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const userResult = await client.query('SELECT id, name, email, phone, company, user_code FROM users WHERE id = $1 FOR UPDATE', [userId]);
+        const user = userResult.rows[0];
+        if (!user) {
+            await client.query('ROLLBACK');
+            const error = new Error('Пользователь не найден');
+            error.statusCode = 404;
+            throw error;
+        }
+        const wallet = await ensureWallet(client, userId, { lock: true });
+        const currentBalance = Number(wallet.devnetSolBalance || 0);
+        if (currentBalance < amount) {
+            await client.query('ROLLBACK');
+            const error = new Error('Недостаточно SOL на балансе. Доступно ' + currentBalance + ' SOL');
+            error.statusCode = 400;
+            error.wallet = { balance: currentBalance, required: amount, currency: 'SOL' };
+            throw error;
+        }
+        await client.query('UPDATE wallets SET "devnetSolBalance" = "devnetSolBalance" - $1, "devnetSolHeldBalance" = "devnetSolHeldBalance" + $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "userId" = $2', [amount, userId]);
+        const rowResult = await client.query(
+            'INSERT INTO wallet_withdraw_requests ("userId", amount, currency, status, "payoutDetails") VALUES ($1, $2, $3, $4, $5) RETURNING id, amount::float AS amount, currency, status, "payoutDetails", "createdAt"',
+            [userId, amount, 'SOL', 'pending', 'Solana address: ' + walletAddress]
+        );
+        const request = rowResult.rows[0];
+        await addWalletTransaction(client, {
+            userId,
+            type: 'withdraw_pending',
+            amount: -amount,
+            currency: 'SOL',
+            description: 'Заявка на вывод SOL #' + request.id,
+            providerPaymentId: 'withdraw_request_' + request.id
+        });
+        await client.query('COMMIT');
+        let signature;
+        try {
+            signature = await sendDevnetSolPayout({ amount, walletAddress });
+        } catch (err) {
+            await refundFailedDevnetSolWithdrawRequest({ requestId: request.id, userId, amount, reason: err.message });
+            err.statusCode = 502;
+            throw err;
+        }
+        try {
+            await completeDevnetSolWithdrawRequest({ requestId: request.id, userId, amount, signature });
+        } catch (err) {
+            console.error('CRITICAL: SOL sent but ledger finalization failed:', { requestId: request.id, signature, error: err.message });
+            err.statusCode = 500;
+            throw err;
+        }
+        request.status = 'approved';
+        request.providerPaymentId = signature;
+        request.adminComment = 'Автоматическая выплата. Транзакция: ' + signature;
+        sendWithdrawRequestEmail({ request, user }).catch((err) => console.error('withdraw email error:', err));
+        return request;
+    } catch (err) {
+        try { await client.query('ROLLBACK'); } catch (_) {}
+        throw err;
+    } finally {
+        client.release();
+    }
+}
+
 async function holdEscrowForAcceptedOffer(db, { load, offer, ownerId }) {
-    const { amount, commissionAmount, carrierAmount } = calculateEscrowAmounts(offer.price);
+    const currency = String(offer.currency || load.currency || 'KZT').trim().toUpperCase();
+    const { amount, commissionAmount, carrierAmount } = calculateEscrowAmounts(offer.price, currency);
     if (amount <= 0) {
         const error = new Error('Сумма ставки должна быть больше 0');
         error.statusCode = 400;
         throw error;
     }
-
-    const existingEscrow = await db.query(
-        `SELECT * FROM escrows WHERE "loadId" = $1 AND status = 'held' FOR UPDATE`,
-        [offer.loadId]
-    );
+    const existingEscrow = await db.query("SELECT * FROM escrows WHERE \"loadId\" = $1 AND status = 'held' FOR UPDATE", [offer.loadId]);
     if (existingEscrow.rows[0]) {
         const error = new Error('По этому грузу уже есть замороженная оплата');
         error.statusCode = 400;
         throw error;
     }
-
     const ownerWallet = await ensureWallet(db, ownerId, { lock: true });
-    const currentBalance = toMoney(ownerWallet.balance);
-    if (currentBalance < amount) {
-        const error = new Error(`Недостаточно средств. Нужно ${amount.toLocaleString('ru-RU')} ₸, доступно ${currentBalance.toLocaleString('ru-RU')} ₸`);
-        error.statusCode = 402;
-        error.wallet = { balance: currentBalance, required: amount };
-        throw error;
+    if (currency === 'SOL') {
+        const currentBalance = Number(ownerWallet.devnetSolBalance || 0);
+        if (currentBalance < amount) {
+            const error = new Error('Недостаточно средств. Нужно ' + amount + ' SOL, доступно ' + currentBalance + ' SOL');
+            error.statusCode = 402;
+            error.wallet = { balance: currentBalance, required: amount, currency: 'SOL' };
+            throw error;
+        }
+        await db.query("UPDATE wallets SET \"devnetSolBalance\" = \"devnetSolBalance\" - $1, \"devnetSolHeldBalance\" = \"devnetSolHeldBalance\" + $1, \"updatedAt\" = CURRENT_TIMESTAMP WHERE \"userId\" = $2", [amount, ownerId]);
+    } else {
+        const currentBalance = toMoney(ownerWallet.balance);
+        if (currentBalance < amount) {
+            const error = new Error('Недостаточно средств. Нужно ' + amount.toLocaleString('ru-RU') + ' ₸, доступно ' + currentBalance.toLocaleString('ru-RU') + ' ₸');
+            error.statusCode = 402;
+            error.wallet = { balance: currentBalance, required: amount, currency: 'KZT' };
+            throw error;
+        }
+        await db.query("UPDATE wallets SET balance = balance - $1, \"heldBalance\" = \"heldBalance\" + $1, \"updatedAt\" = CURRENT_TIMESTAMP WHERE \"userId\" = $2", [amount, ownerId]);
     }
-
-    await db.query(
-        `UPDATE wallets
-         SET balance = balance - $1,
-             "heldBalance" = "heldBalance" + $1,
-             "updatedAt" = CURRENT_TIMESTAMP
-         WHERE "userId" = $2`,
-        [amount, ownerId]
-    );
-
-    const escrowResult = await db.query(
-        `INSERT INTO escrows ("loadId", "offerId", "ownerUserId", "carrierUserId", amount, "commissionAmount", "carrierAmount", currency, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'held')
-         RETURNING *`,
-        [offer.loadId, offer.id, ownerId, offer.carrierUserId, amount, commissionAmount, carrierAmount, offer.currency || 'KZT']
-    );
+    const escrowResult = await db.query("INSERT INTO escrows (\"loadId\", \"offerId\", \"ownerUserId\", \"carrierUserId\", amount, \"commissionAmount\", \"carrierAmount\", currency, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'held') RETURNING *", [offer.loadId, offer.id, ownerId, offer.carrierUserId, amount, commissionAmount, carrierAmount, currency]);
     const escrow = escrowResult.rows[0];
-
-    await addWalletTransaction(db, {
-        userId: ownerId,
-        loadId: offer.loadId,
-        offerId: offer.id,
-        escrowId: escrow.id,
-        type: 'hold',
-        amount: -amount,
-        currency: offer.currency || 'KZT',
-        description: 'Заморозка оплаты за груз'
-    });
-
+    await addWalletTransaction(db, { userId: ownerId, loadId: offer.loadId, offerId: offer.id, escrowId: escrow.id, type: 'hold', amount: -amount, currency, description: 'Заморозка оплаты за груз' });
     return escrow;
 }
-
 async function releaseEscrowForLoad(db, loadId) {
-    const result = await db.query(
-        `SELECT * FROM escrows WHERE "loadId" = $1 AND status = 'held' FOR UPDATE`,
-        [loadId]
-    );
+    const result = await db.query("SELECT * FROM escrows WHERE \"loadId\" = $1 AND status = 'held' FOR UPDATE", [loadId]);
     const escrow = result.rows[0];
     if (!escrow) return null;
-
-    const amount = toMoney(escrow.amount);
-    const carrierAmount = toMoney(escrow.carrierAmount);
-    const commissionAmount = toMoney(escrow.commissionAmount);
-
+    const currency = String(escrow.currency || 'KZT').toUpperCase();
+    const amount = toCurrencyAmount(escrow.amount, currency);
+    const carrierAmount = toCurrencyAmount(escrow.carrierAmount, currency);
+    const commissionAmount = toCurrencyAmount(escrow.commissionAmount, currency);
     await ensureWallet(db, escrow.ownerUserId, { lock: true });
     await ensureWallet(db, escrow.carrierUserId, { lock: true });
-
-    await db.query(
-        `UPDATE wallets
-         SET "heldBalance" = GREATEST("heldBalance" - $1, 0),
-             "updatedAt" = CURRENT_TIMESTAMP
-         WHERE "userId" = $2`,
-        [amount, escrow.ownerUserId]
-    );
-
-    await db.query(
-        `UPDATE wallets
-         SET balance = balance + $1,
-             "updatedAt" = CURRENT_TIMESTAMP
-         WHERE "userId" = $2`,
-        [carrierAmount, escrow.carrierUserId]
-    );
-
-    await db.query(
-        `UPDATE escrows SET status = 'released', "releasedAt" = CURRENT_TIMESTAMP WHERE id = $1`,
-        [escrow.id]
-    );
-
-    await addWalletTransaction(db, {
-        userId: escrow.carrierUserId,
-        loadId: escrow.loadId,
-        offerId: escrow.offerId,
-        escrowId: escrow.id,
-        type: 'release',
-        amount: carrierAmount,
-        currency: escrow.currency,
-        description: 'Выплата за завершенный груз'
-    });
-
-    if (commissionAmount > 0) {
-        await addWalletTransaction(db, {
-            userId: escrow.ownerUserId,
-            loadId: escrow.loadId,
-            offerId: escrow.offerId,
-            escrowId: escrow.id,
-            type: 'commission',
-            amount: -commissionAmount,
-            currency: escrow.currency,
-            description: 'Комиссия RouteHub'
-        });
+    if (currency === 'SOL') {
+        await db.query("UPDATE wallets SET \"devnetSolHeldBalance\" = GREATEST(\"devnetSolHeldBalance\" - $1, 0), \"updatedAt\" = CURRENT_TIMESTAMP WHERE \"userId\" = $2", [amount, escrow.ownerUserId]);
+        await db.query("UPDATE wallets SET \"devnetSolBalance\" = \"devnetSolBalance\" + $1, \"updatedAt\" = CURRENT_TIMESTAMP WHERE \"userId\" = $2", [carrierAmount, escrow.carrierUserId]);
+    } else {
+        await db.query("UPDATE wallets SET \"heldBalance\" = GREATEST(\"heldBalance\" - $1, 0), \"updatedAt\" = CURRENT_TIMESTAMP WHERE \"userId\" = $2", [amount, escrow.ownerUserId]);
+        await db.query("UPDATE wallets SET balance = balance + $1, \"updatedAt\" = CURRENT_TIMESTAMP WHERE \"userId\" = $2", [carrierAmount, escrow.carrierUserId]);
     }
-
+    await db.query("UPDATE escrows SET status = 'released', \"releasedAt\" = CURRENT_TIMESTAMP WHERE id = $1", [escrow.id]);
+    await addWalletTransaction(db, { userId: escrow.carrierUserId, loadId: escrow.loadId, offerId: escrow.offerId, escrowId: escrow.id, type: 'release', amount: carrierAmount, currency, description: 'Выплата за завершенный груз' });
+    if (commissionAmount > 0) {
+        await addWalletTransaction(db, { userId: escrow.ownerUserId, loadId: escrow.loadId, offerId: escrow.offerId, escrowId: escrow.id, type: 'commission', amount: -commissionAmount, currency, description: 'Комиссия RouteHub' });
+    }
     return { ...escrow, status: 'released' };
 }
 
 async function refundEscrowForLoad(db, loadId, description = 'Возврат замороженной оплаты') {
-    const result = await db.query(
-        `SELECT * FROM escrows WHERE "loadId" = $1 AND status = 'held' FOR UPDATE`,
-        [loadId]
-    );
+    const result = await db.query("SELECT * FROM escrows WHERE \"loadId\" = $1 AND status = 'held' FOR UPDATE", [loadId]);
     const escrow = result.rows[0];
     if (!escrow) return null;
-
-    const amount = toMoney(escrow.amount);
+    const currency = String(escrow.currency || 'KZT').toUpperCase();
+    const amount = toCurrencyAmount(escrow.amount, currency);
     await ensureWallet(db, escrow.ownerUserId, { lock: true });
-
-    await db.query(
-        `UPDATE wallets
-         SET balance = balance + $1,
-             "heldBalance" = GREATEST("heldBalance" - $1, 0),
-             "updatedAt" = CURRENT_TIMESTAMP
-         WHERE "userId" = $2`,
-        [amount, escrow.ownerUserId]
-    );
-
-    await db.query(
-        `UPDATE escrows SET status = 'refunded', "refundedAt" = CURRENT_TIMESTAMP WHERE id = $1`,
-        [escrow.id]
-    );
-
-    await addWalletTransaction(db, {
-        userId: escrow.ownerUserId,
-        loadId: escrow.loadId,
-        offerId: escrow.offerId,
-        escrowId: escrow.id,
-        type: 'refund',
-        amount,
-        currency: escrow.currency,
-        description
-    });
-
+    if (currency === 'SOL') {
+        await db.query("UPDATE wallets SET \"devnetSolBalance\" = \"devnetSolBalance\" + $1, \"devnetSolHeldBalance\" = GREATEST(\"devnetSolHeldBalance\" - $1, 0), \"updatedAt\" = CURRENT_TIMESTAMP WHERE \"userId\" = $2", [amount, escrow.ownerUserId]);
+    } else {
+        await db.query("UPDATE wallets SET balance = balance + $1, \"heldBalance\" = GREATEST(\"heldBalance\" - $1, 0), \"updatedAt\" = CURRENT_TIMESTAMP WHERE \"userId\" = $2", [amount, escrow.ownerUserId]);
+    }
+    await db.query("UPDATE escrows SET status = 'refunded', \"refundedAt\" = CURRENT_TIMESTAMP WHERE id = $1", [escrow.id]);
+    await addWalletTransaction(db, { userId: escrow.ownerUserId, loadId: escrow.loadId, offerId: escrow.offerId, escrowId: escrow.id, type: 'refund', amount, currency, description });
     return { ...escrow, status: 'refunded' };
 }
 function createMobileToken(user) {
@@ -2002,9 +2457,42 @@ app.post('/api/wallet/topup-request', checkAuth, async (req, res) => {
     }
 });
 
+app.post('/api/solana/devnet/webhook', (req, res) => {
+    const expectedAuth = SOLANA_DEVNET_WEBHOOK_AUTH;
+    if (!expectedAuth || req.get('authorization') !== expectedAuth) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    // Helius expects a fast 2xx acknowledgement; processing is idempotent and
+    // continues after the response so webhook retries cannot double-credit.
+    res.sendStatus(200);
+    setImmediate(() => processDevnetSolWebhook(req.body));
+});
+
+app.post('/api/wallet/devnet-sol/topup', checkAuth, async (req, res) => {
+    try {
+        const topup = await createDevnetSolTopup(req.session.userId, req.body || {});
+        res.json({ ok: true, topup, wallet: await getWalletPayload(req.session.userId) });
+    } catch (err) {
+        console.error('/api/wallet/devnet-sol/topup error:', err);
+        res.status(err.statusCode || 500).json({ error: err.message });
+    }
+});
+
+app.post('/api/wallet/devnet-sol/topup/:id/confirm', checkAuth, async (req, res) => {
+    try {
+        const signature = String(req.body?.signature || '').trim();
+        if (!signature || signature.length < 20) return res.status(400).json({ error: 'Не передана подпись транзакции' });
+        const topup = await confirmDevnetTopupFromSignature(req.session.userId, req.params.id, signature);
+        res.json({ ok: true, topup, wallet: await getWalletPayload(req.session.userId) });
+    } catch (err) {
+        console.error('/api/wallet/devnet-sol/topup/:id/confirm error:', err.message);
+        res.status(err.statusCode || 500).json({ error: err.message });
+    }
+});
+
 app.get('/api/wallet/withdraw-requests', checkAuth, async (req, res) => {
     try {
-        const requests = await getMany('SELECT id, amount::float AS amount, currency, status, "payoutDetails", "adminComment", "createdAt", "reviewedAt" FROM wallet_withdraw_requests WHERE "userId" = $1 ORDER BY id DESC LIMIT 20', [req.session.userId]);
+        const requests = await getMany('SELECT id, amount::float AS amount, currency, status, "payoutDetails", "adminComment", "providerPaymentId", "createdAt", "reviewedAt" FROM wallet_withdraw_requests WHERE "userId" = $1 ORDER BY id DESC LIMIT 20', [req.session.userId]);
         res.json({ ok: true, requests });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -2018,6 +2506,16 @@ app.post('/api/wallet/withdraw-request', checkAuth, async (req, res) => {
         res.status(err.statusCode || 500).json({ error: err.message, wallet: err.wallet });
     }
 });
+app.post('/api/wallet/devnet-sol/withdraw-request', checkAuth, async (req, res) => {
+    try {
+        const request = await createDevnetSolWithdrawRequest(req.session.userId, req.body || {});
+        res.json({ ok: true, request, wallet: await getWalletPayload(req.session.userId) });
+    } catch (err) {
+        console.error('/api/wallet/devnet-sol/withdraw-request error:', err);
+        res.status(err.statusCode || 500).json({ error: err.message, wallet: err.wallet });
+    }
+});
+
 app.post('/api/wallet/topup-test', checkAuth, async (req, res) => {
     if (process.env.ALLOW_TEST_BALANCE !== 'true') {
         return res.status(404).json({ error: 'Not found' });
@@ -2305,9 +2803,41 @@ app.post('/api/mobile/wallet/topup-request', checkMobileAuth, async (req, res) =
     }
 });
 
+app.post('/api/mobile/wallet/devnet-sol/topup', checkMobileAuth, async (req, res) => {
+    try {
+        const topup = await createDevnetSolTopup(req.mobileUser.userId, req.body || {});
+        res.json({ ok: true, topup, wallet: await getWalletPayload(req.mobileUser.userId) });
+    } catch (err) {
+        console.error('/api/mobile/wallet/devnet-sol/topup error:', err);
+        res.status(err.statusCode || 500).json({ error: err.message });
+    }
+});
+
+app.post('/api/mobile/wallet/devnet-sol/topup/:id/confirm', checkMobileAuth, async (req, res) => {
+    try {
+        const signature = String(req.body?.signature || '').trim();
+        if (!signature || signature.length < 20) return res.status(400).json({ error: 'Не передана подпись транзакции' });
+        const topup = await confirmDevnetTopupFromSignature(req.mobileUser.userId, req.params.id, signature);
+        res.json({ ok: true, topup, wallet: await getWalletPayload(req.mobileUser.userId) });
+    } catch (err) {
+        console.error('/api/mobile/wallet/devnet-sol/topup/:id/confirm error:', err.message);
+        res.status(err.statusCode || 500).json({ error: err.message });
+    }
+});
+
+app.post('/api/mobile/wallet/devnet-sol/withdraw-request', checkMobileAuth, async (req, res) => {
+    try {
+        const request = await createDevnetSolWithdrawRequest(req.mobileUser.userId, req.body || {});
+        res.json({ ok: true, request, wallet: await getWalletPayload(req.mobileUser.userId) });
+    } catch (err) {
+        console.error('/api/mobile/wallet/devnet-sol/withdraw-request error:', err);
+        res.status(err.statusCode || 500).json({ error: err.message, wallet: err.wallet });
+    }
+});
+
 app.get('/api/mobile/wallet/withdraw-requests', checkMobileAuth, async (req, res) => {
     try {
-        const requests = await getMany('SELECT id, amount::float AS amount, currency, status, "payoutDetails", "adminComment", "createdAt", "reviewedAt" FROM wallet_withdraw_requests WHERE "userId" = $1 ORDER BY id DESC LIMIT 20', [req.mobileUser.userId]);
+        const requests = await getMany('SELECT id, amount::float AS amount, currency, status, "payoutDetails", "adminComment", "providerPaymentId", "createdAt", "reviewedAt" FROM wallet_withdraw_requests WHERE "userId" = $1 ORDER BY id DESC LIMIT 20', [req.mobileUser.userId]);
         res.json({ ok: true, requests });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -3165,10 +3695,10 @@ app.post('/api/mobile/loads', checkMobileAuth, async (req, res) => {
 
         const result = await query(
             `INSERT INTO loads (
-                "userId", from_location, to_location, weight, type, price, date, lat, lng,
+                "userId", from_location, to_location, weight, type, price, currency, date, lat, lng,
                 contact_info, volume, length, width, height, loading_type, description
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
             RETURNING id`,
             [
                 userId,
@@ -3177,6 +3707,7 @@ app.post('/api/mobile/loads', checkMobileAuth, async (req, res) => {
                 load.weight,
                 load.type,
                 load.price,
+                load.currency,
                 load.ready_date,
                 load.lat,
                 load.lng,
@@ -4340,11 +4871,31 @@ app.get('/api/admin/withdraw-requests', checkAdmin, async (req, res) => {
 
 app.post('/api/admin/withdraw-requests/:id/approve', checkAdmin, async (req, res) => {
     const requestId = req.params.id; const comment = String(req.body?.comment || '').trim();
+    const client = await pool.connect();
     try {
-        const result = await query('UPDATE wallet_withdraw_requests SET status = $1, "adminComment" = $2, "reviewedBy" = $3, "reviewedAt" = CURRENT_TIMESTAMP, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $4 AND status = $5 RETURNING id', ['approved', comment, req.session.userId || null, requestId, 'pending']);
-        if (!result.rows[0]) return res.status(400).json({ error: '\u0417\u0430\u044f\u0432\u043a\u0430 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u0430 \u0438\u043b\u0438 \u0443\u0436\u0435 \u043e\u0431\u0440\u0430\u0431\u043e\u0442\u0430\u043d\u0430' });
+        await client.query('BEGIN');
+        const result = await client.query('SELECT * FROM wallet_withdraw_requests WHERE id = $1 FOR UPDATE', [requestId]);
+        const request = result.rows[0];
+        if (!request || request.status !== 'pending') {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: 'Заявка не найдена или уже обработана' });
+        }
+        const currency = String(request.currency || 'KZT').toUpperCase();
+        if (currency === 'SOL') {
+            const wallet = await ensureWallet(client, request.userId, { lock: true });
+            const amount = Number(request.amount || 0);
+            const held = Number(wallet.devnetSolHeldBalance || 0);
+            if (held + 1e-9 < amount) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ error: 'Недостаточно удержанных SOL для подтверждения заявки' });
+            }
+            await client.query('UPDATE wallets SET "devnetSolHeldBalance" = GREATEST("devnetSolHeldBalance" - $1, 0), "updatedAt" = CURRENT_TIMESTAMP WHERE "userId" = $2', [amount, request.userId]);
+        }
+        await client.query('UPDATE wallet_withdraw_requests SET status = $1, "adminComment" = $2, "reviewedBy" = $3, "reviewedAt" = CURRENT_TIMESTAMP, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $4', ['approved', comment, req.session.userId || null, requestId]);
+        await client.query('COMMIT');
         res.json({ ok: true });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    } catch (err) { try { await client.query('ROLLBACK'); } catch (_) {} res.status(500).json({ error: err.message }); }
+    finally { client.release(); }
 });
 
 app.post('/api/admin/withdraw-requests/:id/reject', checkAdmin, async (req, res) => {
@@ -4355,10 +4906,15 @@ app.post('/api/admin/withdraw-requests/:id/reject', checkAdmin, async (req, res)
         const request = result.rows[0];
         if (!request || request.status !== 'pending') { await client.query('ROLLBACK'); return res.status(400).json({ error: '\u0417\u0430\u044f\u0432\u043a\u0430 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u0430 \u0438\u043b\u0438 \u0443\u0436\u0435 \u043e\u0431\u0440\u0430\u0431\u043e\u0442\u0430\u043d\u0430' }); }
         const wallet = await ensureWallet(client, request.userId, { lock: true });
-        const amount = toMoney(request.amount);
-        await client.query('UPDATE wallets SET balance = balance + $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "userId" = $2', [amount, request.userId]);
+        const currency = String(request.currency || 'KZT').toUpperCase();
+        const amount = currency === 'SOL' ? Number(request.amount || 0) : toMoney(request.amount);
+        if (currency === 'SOL') {
+            await client.query('UPDATE wallets SET "devnetSolHeldBalance" = GREATEST("devnetSolHeldBalance" - $1, 0), "devnetSolBalance" = "devnetSolBalance" + $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "userId" = $2', [amount, request.userId]);
+        } else {
+            await client.query('UPDATE wallets SET balance = balance + $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "userId" = $2', [amount, request.userId]);
+        }
         await client.query('UPDATE wallet_withdraw_requests SET status = $1, "adminComment" = $2, "reviewedBy" = $3, "reviewedAt" = CURRENT_TIMESTAMP, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $4', ['rejected', comment, req.session.userId || null, requestId]);
-        await addWalletTransaction(client, { userId: request.userId, type: 'withdraw_refund', amount, currency: wallet.currency || 'KZT', description: '\u0412\u043e\u0437\u0432\u0440\u0430\u0442 \u043f\u043e \u043e\u0442\u043a\u043b\u043e\u043d\u0435\u043d\u043d\u043e\u0439 \u0437\u0430\u044f\u0432\u043a\u0435 \u043d\u0430 \u0432\u044b\u0432\u043e\u0434 #' + requestId });
+        await addWalletTransaction(client, { userId: request.userId, type: 'withdraw_refund', amount, currency, description: 'Возврат по отклоненной заявке на вывод #' + requestId });
         await client.query('COMMIT'); res.json({ ok: true });
     } catch (err) { await client.query('ROLLBACK'); res.status(500).json({ error: err.message }); } finally { client.release(); }
 });
@@ -4883,10 +5439,10 @@ app.post('/api/loads', checkAuth, async (req, res) => {
 
         const result = await query(
             `INSERT INTO loads (
-                "userId", from_location, to_location, weight, type, price, date, lat, lng,
+                "userId", from_location, to_location, weight, type, price, currency, date, lat, lng,
                 contact_info, volume, length, width, height, loading_type, description
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
             RETURNING id`,
             [
                 userId,
@@ -4895,6 +5451,7 @@ app.post('/api/loads', checkAuth, async (req, res) => {
                 load.weight,
                 load.type,
                 load.price,
+                load.currency,
                 load.ready_date,
                 load.lat,
                 load.lng,
@@ -4921,6 +5478,159 @@ app.get('/api/loads', async (req, res) => {
         res.json(rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+// Public, read-only deal tracker used by escrow-demo.html. The payload is
+// intentionally limited to operational cargo data and contains no contacts,
+// emails, document numbers, wallet balances or other private account fields.
+app.get('/api/escrow-demo/loads', async (req, res) => {
+    try {
+        const rows = await getMany(`
+            SELECT
+                loads.id,
+                loads.from_location AS "fromLocation",
+                loads.to_location AS "toLocation",
+                loads.type,
+                loads.weight,
+                loads.date,
+                COALESCE(loads.status, 'open') AS status,
+                COALESCE(loads.currency, accepted.currency, 'KZT') AS currency,
+                loads."clientCompleted",
+                loads."carrierCompleted",
+                COALESCE(offer_counts.total, 0)::int AS "offerCount",
+                accepted.id AS "acceptedOfferId",
+                accepted.price::float AS "acceptedPrice",
+                accepted.currency AS "acceptedCurrency",
+                latest_escrow.id AS "escrowId",
+                latest_escrow.status AS "escrowStatus",
+                latest_escrow.amount::float AS "escrowAmount"
+            FROM loads
+            LEFT JOIN LATERAL (
+                SELECT id, price, currency
+                FROM offers
+                WHERE offers."loadId" = loads.id AND offers.status = 'accepted'
+                ORDER BY offers.id DESC
+                LIMIT 1
+            ) accepted ON true
+            LEFT JOIN LATERAL (
+                SELECT COUNT(*) AS total
+                FROM offers
+                WHERE offers."loadId" = loads.id
+            ) offer_counts ON true
+            LEFT JOIN LATERAL (
+                SELECT id, status, amount
+                FROM escrows
+                WHERE escrows."loadId" = loads.id
+                ORDER BY escrows.id DESC
+                LIMIT 1
+            ) latest_escrow ON true
+            ORDER BY loads.id DESC
+            LIMIT 100
+        `);
+        res.json({ ok: true, loads: rows });
+    } catch (err) {
+        console.error('/api/escrow-demo/loads error:', err);
+        res.status(500).json({ error: 'Не удалось загрузить список грузов' });
+    }
+});
+
+app.get('/api/escrow-demo/loads/:id', async (req, res) => {
+    const loadId = Number(req.params.id);
+    if (!Number.isInteger(loadId) || loadId <= 0) {
+        return res.status(400).json({ error: 'Некорректный номер груза' });
+    }
+
+    try {
+        const load = await getOne(`
+            SELECT
+                loads.id,
+                loads.from_location AS "fromLocation",
+                loads.to_location AS "toLocation",
+                loads.type,
+                loads.weight,
+                loads.volume,
+                loads.length,
+                loads.width,
+                loads.height,
+                loads.loading_type AS "loadingType",
+                loads.description,
+                loads.date,
+                COALESCE(loads.status, 'open') AS status,
+                COALESCE(loads.currency, accepted.currency, 'KZT') AS currency,
+                loads."clientCompleted",
+                loads."carrierCompleted",
+                loads."clientCompletedAt",
+                loads."carrierCompletedAt",
+                COALESCE(NULLIF(owner.company, ''), NULLIF(owner.name, ''), 'Грузовладелец') AS "ownerName",
+                accepted.id AS "acceptedOfferId",
+                accepted.price::float AS "acceptedPrice",
+                accepted.currency AS "acceptedCurrency",
+                accepted."pickupDate",
+                accepted."truckType",
+                accepted."createdAt" AS "acceptedOfferCreatedAt",
+                COALESCE(NULLIF(carrier.company, ''), NULLIF(carrier.name, ''), NULLIF(accepted."carrierName", ''), 'Перевозчик') AS "carrierName",
+                COALESCE(offer_counts.total, 0)::int AS "offerCount",
+                COALESCE(offer_counts.pending, 0)::int AS "pendingOfferCount",
+                COALESCE(offer_counts.rejected, 0)::int AS "rejectedOfferCount",
+                latest_escrow.id AS "escrowId",
+                latest_escrow.status AS "escrowStatus",
+                latest_escrow.amount::float AS "escrowAmount",
+                latest_escrow."carrierAmount"::float AS "escrowCarrierAmount",
+                latest_escrow."commissionAmount"::float AS "escrowCommissionAmount",
+                latest_escrow.currency AS "escrowCurrency",
+                latest_escrow."createdAt" AS "escrowCreatedAt",
+                latest_escrow."releasedAt" AS "escrowReleasedAt",
+                latest_escrow."refundedAt" AS "escrowRefundedAt"
+            FROM loads
+            LEFT JOIN users owner ON owner.id = loads."userId"
+            LEFT JOIN LATERAL (
+                SELECT *
+                FROM offers
+                WHERE offers."loadId" = loads.id AND offers.status = 'accepted'
+                ORDER BY offers.id DESC
+                LIMIT 1
+            ) accepted ON true
+            LEFT JOIN users carrier ON carrier.id = accepted."carrierUserId"
+            LEFT JOIN LATERAL (
+                SELECT
+                    COUNT(*) AS total,
+                    COUNT(*) FILTER (WHERE status = 'pending') AS pending,
+                    COUNT(*) FILTER (WHERE status = 'rejected') AS rejected
+                FROM offers
+                WHERE offers."loadId" = loads.id
+            ) offer_counts ON true
+            LEFT JOIN LATERAL (
+                SELECT *
+                FROM escrows
+                WHERE escrows."loadId" = loads.id
+                ORDER BY escrows.id DESC
+                LIMIT 1
+            ) latest_escrow ON true
+            WHERE loads.id = $1
+        `, [loadId]);
+
+        if (!load) return res.status(404).json({ error: 'Груз не найден' });
+
+        const transactions = await getMany(`
+            SELECT
+                id,
+                type,
+                amount::float AS amount,
+                currency,
+                status,
+                description,
+                "providerPaymentId",
+                "createdAt"
+            FROM wallet_transactions
+            WHERE "loadId" = $1
+            ORDER BY "createdAt" ASC, id ASC
+        `, [loadId]);
+
+        res.json({ ok: true, load, transactions });
+    } catch (err) {
+        console.error('/api/escrow-demo/loads/:id error:', err);
+        res.status(500).json({ error: 'Не удалось загрузить этапы сделки' });
     }
 });
 
@@ -6838,7 +7548,10 @@ app.post('/api/mobile/ai/chat', checkMobileAuth, async (req, res) => {
 
 initDb()
     .then(() => {
-        httpServer.listen(PORT, '0.0.0.0', () => console.log(`Server is running on port ${PORT}`));
+        httpServer.listen(PORT, '0.0.0.0', () => {
+            console.log(`Server is running on port ${PORT}`);
+            ensureHeliusDevnetWebhook().catch((error) => console.error('Helius webhook startup error:', error.message));
+        });
     })
     .catch((err) => {
         console.error('Ошибка инициализации PostgreSQL:', err);
@@ -6923,17 +7636,6 @@ const ChatTemplates = {
         `;
     }
 };
-
-
-
-
-
-
-
-
-
-
-
 
 
 

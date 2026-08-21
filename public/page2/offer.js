@@ -20,6 +20,20 @@ const goChatBtn = document.getElementById('goChat');
 let loadData = null;
 let editingOfferId = null;
 
+function updateOfferCurrencyUi() {
+  const select = document.getElementById('currency');
+  const input = document.getElementById('price');
+  const label = document.getElementById('priceLabel');
+  const isSol = select?.value === 'SOL';
+  if (label) label.textContent = isSol ? 'Сумма (SOL)' : 'Сумма (₸)';
+  if (input) {
+    input.min = isSol ? '0.000001' : '0';
+    input.step = isSol ? '0.000001' : '1000';
+    input.placeholder = isSol ? 'Например: 0.1' : 'Например: 250000';
+  }
+}
+
+
 function lockOfferForm(message) {
   if (form) {
     Array.from(form.elements).forEach((element) => {
@@ -60,6 +74,9 @@ async function loadCargo() {
     if (!response.ok || data?.error) throw new Error('load not found');
 
     loadData = data;
+    const currencySelect = document.getElementById('currency');
+    if (currencySelect) currencySelect.value = data.currency === 'SOL' ? 'SOL' : 'KZT';
+    updateOfferCurrencyUi();
 
     if (elLine) elLine.textContent = `Груз #${data.id}: ${data.from_location} → ${data.to_location}`;
     try {
@@ -103,6 +120,9 @@ async function submitOffer(payload) {
   }
   return data;
 }
+
+document.getElementById('currency')?.addEventListener('change', updateOfferCurrencyUi);
+updateOfferCurrencyUi();
 
 form?.addEventListener('submit', async (e) => {
   e.preventDefault();

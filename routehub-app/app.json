@@ -2,7 +2,7 @@
   "expo": {
     "name": "RouteHub",
     "slug": "routehub-app",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "routehubapp",

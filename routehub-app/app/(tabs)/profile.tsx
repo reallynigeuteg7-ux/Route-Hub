@@ -31,6 +31,7 @@ type UserProfile = {
     heldBalance?: number;
     availableBalance?: number;
     currency?: string;
+    devnetSolBalance?: number;
   };
 };
 
@@ -128,6 +129,11 @@ export default function ProfileScreen() {
     return `${numeric.toLocaleString('ru-RU')} ₸`;
   };
 
+  const formatDevnetSol = (value?: number) => {
+    const numeric = Number(value || 0);
+    return `${numeric.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 9 })} SOL`;
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
@@ -208,6 +214,7 @@ export default function ProfileScreen() {
               <Text style={styles.walletMeta}>Заморожено: {formatMoney(user.wallet?.heldBalance)}</Text>
               <Text style={styles.walletMeta}>Валюта: {user.wallet?.currency || 'KZT'}</Text>
             </View>
+            <Text style={styles.devnetSolBalance}>Тестовый Devnet: {formatDevnetSol(user.wallet?.devnetSolBalance)}</Text>
           </View>
 
           <View style={styles.section}>
@@ -314,6 +321,7 @@ function createStyles(colors: TabThemeColors) {
     walletButtonText: { color: '#FFFFFF', fontSize: 13, fontWeight: '900' },
     walletStats: { marginTop: 12, gap: 4 },
     walletMeta: { color: colors.mutedText, fontSize: 13, fontWeight: '700' },
+    devnetSolBalance: { color: '#38BDF8', fontSize: 13, fontWeight: '800', marginTop: 10 },
     section: { marginBottom: 18 },
     sectionTitle: { color: colors.text, fontSize: 18, fontWeight: '800', marginBottom: 12 },
     menuCard: { backgroundColor: colors.surface, borderRadius: 20, padding: 16, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 14 },

@@ -10,6 +10,7 @@
     <title>RouteHub — Авторизация</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="log.css">
+    <link rel="stylesheet" href="email-code-modal.css">
 </head>
 <body>
 
@@ -36,10 +37,15 @@
 
                 <form id="register-form" class="auth-form" style="display:none;">
                     <input id="reg-name" type="text" placeholder="Имя или Название компании" required>
-                    <input id="reg-email" type="email" placeholder="Email" required>    
-                    <input id="reg-email-code" type="text" inputmode="numeric" maxlength="6" placeholder="Код из email" style="display:none;">
+                    <input id="reg-email" type="email" placeholder="Email" required>
                     <input id="reg-password" type="password" placeholder="Пароль" required>
                     <input id="reg-phone" type="tel" placeholder="+7 (___) ___-__-__" required>
+                    <select id="reg-person-type" required style="width: 100%; background: #f0f0e8; border: none; border-radius: 15px; padding: 16px 18px; margin-bottom: 12px; font-size: 15px; outline: none; font-family: inherit;">
+                        <option value="individual">Физлицо</option>
+                        <option value="self_employed">Самозанятый</option>
+                        <option value="ip">ИП</option>
+                        <option value="too">ТОО</option>
+                    </select>
                     <select id="reg-role" style="width: 100%; background: #f0f0e8; border: none; border-radius: 15px; padding: 16px 18px; margin-bottom: 12px; font-size: 15px; outline: none; font-family: inherit;">
                         <option value="client">Я Грузовладелец</option>
                         <option value="carrier">Я Перевозчик</option>
@@ -64,6 +70,24 @@
                 <h2 class="bigfo">ROUTEHUB</h2>
             </div>
         </div>
+    </div>
+
+    <div id="email-code-modal" class="code-modal" hidden>
+        <button id="code-modal-backdrop" class="code-modal__backdrop" type="button" aria-label="Закрыть окно"></button>
+        <section class="code-modal__panel" role="dialog" aria-modal="true" aria-labelledby="code-modal-title" aria-describedby="code-modal-description">
+            <button id="code-modal-close" class="code-modal__close" type="button" aria-label="Закрыть">&times;</button>
+            <div class="code-modal__icon" aria-hidden="true">✉</div>
+            <h2 id="code-modal-title">Подтвердите email</h2>
+            <p id="code-modal-description" class="code-modal__description">
+                Введите шестизначный код, отправленный на <strong id="code-email"></strong>
+            </p>
+            <form id="email-code-form" class="code-modal__form">
+                <input id="reg-email-code" class="code-modal__input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000" aria-label="Код подтверждения" required>
+                <div id="code-msg" class="code-modal__message" aria-live="polite"></div>
+                <button id="code-confirm" type="submit" class="btn-start">Подтвердить и зарегистрироваться</button>
+                <button id="code-resend" type="button" class="code-modal__resend">Отправить код повторно</button>
+            </form>
+        </section>
     </div>
 
     <script src="loginscript.js"></script>

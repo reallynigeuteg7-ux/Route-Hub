@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -15,10 +14,8 @@ import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { goBackOrFallback } from '../lib/navigation';
 import { API_BASE_URL } from '../lib/api';
-import { canOpenDgisNavigation, openDgisNavigation } from '../lib/dgis-navigation';
+import { fetchFreeDrivingRoute } from '../lib/free-route';
 import { useAppTheme } from '../lib/theme';
-
-const MAPGL_API_KEY = '9951811e-e54b-4b36-b793-ebf47deb7d64';
 
 const MAP_TEXT = {
   carrier: '\u041f\u0435\u0440\u0435\u0432\u043e\u0437\u0447\u0438\u043a',
@@ -155,29 +152,6 @@ function formatCarrierUpdatedAt(value?: string) {
   return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 }
 
-function getFallbackErrorText(message: string) {
-  const msg = String(message || '');
-  const lower = msg.toLowerCase();
-
-  if (msg.includes('max (km): 50') || lower.includes('excessive distance')) {
-    return '2GIS отклонил длинный маршрут. Проверьте доступ ключа к Routing API и ответ сервера.';
-  }
-
-  if (lower.includes('route not found') || lower.includes('маршрут не найден')) {
-    return 'Маршрут не найден. Попробуйте точки ближе к дороге или другой город.';
-  }
-
-  if (msg.includes('403')) {
-    return '2GIS отклонил запрос маршрута. Проверьте ключ и доступ к Routing API.';
-  }
-
-  if (lower.includes('сервер не вернул точки маршрута')) {
-    return 'Сервер не вернул геометрию маршрута.';
-  }
-
-  return msg || 'Не удалось построить маршрут';
-}
-
 export default function MapScreen() {
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -196,8 +170,6 @@ export default function MapScreen() {
   const loadId = typeof params.loadId === 'string' ? params.loadId : '';
   const showCarrierLocation = params.ownerMap === '1';
   const trackCarrierLocation = params.trackCarrier === '1';
-  const autoStartTrip = params.autoStartTrip === '1';
-  const autoStartTripRef = useRef(false);
 
   const fromCoords = useMemo(() => resolveCoords(from, CITY_COORDS['Алматы']), [from]);
   const toCoords = useMemo(() => resolveCoords(to, CITY_COORDS['Астана']), [to]);
@@ -215,57 +187,33 @@ export default function MapScreen() {
         setNearbyLoads([]);
         setShowAllNearbyLoads(false);
 
-        const response = await fetch(`${API_BASE_URL}/api/mobile/route`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: { lon: fromCoords[0], lat: fromCoords[1] },
-            to: { lon: toCoords[0], lat: toCoords[1] },
-            loadId,
-          }),
-        });
-
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          throw new Error(data?.error || `Ошибка маршрута ${response.status}`);
-        }
-
-        const geometry = data?.geometry;
-        if (!Array.isArray(geometry) || geometry.length < 2) {
-          throw new Error('Сервер не вернул точки маршрута');
-        }
-
-        const normalized = geometry
-          .map((item: any): RoutePoint | null => {
-            if (Array.isArray(item) && item.length >= 2) {
-              return [Number(item[0]), Number(item[1])];
-            }
-            if (item && typeof item.lon === 'number' && typeof item.lat === 'number') {
-              return [item.lon, item.lat];
-            }
-            if (item && typeof item.x === 'number' && typeof item.y === 'number') {
-              return [item.x, item.y];
-            }
-            return null;
-          })
-          .filter(Boolean) as RoutePoint[];
-
+        const freeRoute = await fetchFreeDrivingRoute(fromCoords, toCoords);
         if (cancelled) return;
+        setRouteCoords(freeRoute);
 
-        if (normalized.length >= 2) {
-          setRouteCoords(normalized);
-          setNearbyLoads(Array.isArray(data?.nearby_loads) ? data.nearby_loads : []);
-          return;
+        // Nearby loads are optional enrichment; the map itself does not
+        // depend on a paid routing provider.
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/mobile/route`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              from: { lon: fromCoords[0], lat: fromCoords[1] },
+              to: { lon: toCoords[0], lat: toCoords[1] },
+              loadId,
+            }),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!cancelled && response.ok && Array.isArray(data?.nearby_loads)) {
+            setNearbyLoads(data.nearby_loads);
+          }
+        } catch {
+          // Keep the route visible even when optional cargo suggestions fail.
         }
-
-        throw new Error('Недостаточно точек маршрута');
       } catch (error: any) {
         if (cancelled) return;
 
-        setMapError(getFallbackErrorText(error?.message || ''));
+        setMapError(error?.message || 'Не удалось построить маршрут');
         setRouteCoords([
           [fromCoords[0], fromCoords[1]],
           [toCoords[0], toCoords[1]],
@@ -493,7 +441,8 @@ export default function MapScreen() {
     });
   </script>
 
-  <script src="https://mapgl.2gis.com/api/js/v1"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
   <script>
     try {
@@ -507,22 +456,21 @@ export default function MapScreen() {
       var mapCenter = [${mapCenter[0]}, ${mapCenter[1]}];
       var mapZoom = ${mapZoom};
 
-      var map = new mapgl.Map('map', {
-        center: mapCenter,
-        zoom: mapZoom,
-        key: '${MAPGL_API_KEY}',
-        zoomControl: true,
-        trafficControl: false
-      });
+      var map = L.map('map', { zoomControl: true, attributionControl: true });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
 
-      if (!ownerMapMode || !carrierLocation) {
-        new mapgl.Polyline(map, {
-          coordinates: routeCoords,
-          width: 6,
-          color: '#2F80ED',
-          opacity: 0.95
-        });
-      }
+      var routeLatLngs = routeCoords.map(function(point) {
+        return [Number(point[1]), Number(point[0])];
+      });
+      var routeLine = L.polyline(routeLatLngs, {
+        color: '#2F80ED',
+        weight: 6,
+        opacity: 0.95,
+        lineJoin: 'round'
+      }).addTo(map);
 
       function createMarker(className, text, coordinates, letter) {
         var el = document.createElement('div');
@@ -531,11 +479,15 @@ export default function MapScreen() {
           '<div class="pin-dot"><span class="pin-inner">' + letter + '</span></div>' +
           '<div class="pin-label">' + text + '</div>';
 
-        new mapgl.HtmlMarker(map, {
-          coordinates: coordinates,
-          html: el,
-          anchor: [0.5, 1]
-        });
+        L.marker([coordinates[1], coordinates[0]], {
+          icon: L.divIcon({
+            className: 'leaflet-route-pin',
+            html: el.outerHTML,
+            iconSize: [90, 86],
+            iconAnchor: [45, 40]
+          }),
+          keyboard: false
+        }).addTo(map);
       }
 
 
@@ -547,11 +499,15 @@ export default function MapScreen() {
         markerEl.innerHTML = '<svg viewBox="0 0 48 48" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path fill="#FFFFFF" d="M8 15c0-2.2 1.8-4 4-4h18c2.2 0 4 1.8 4 4v5h3.8c1.2 0 2.3.6 3 1.6l3.1 4.8c.4.6.6 1.3.6 2.1V34c0 1.7-1.3 3-3 3H39a5.5 5.5 0 0 1-10.6 0H20a5.5 5.5 0 0 1-10.6 0H8c-1.7 0-3-1.3-3-3V18c0-1.7 1.3-3 3-3Zm4 4v11h18V15H12v4Zm22 5v6h6.5l-2.6-4.1c-.4-.6-1-.9-1.7-.9H34ZM14.7 39a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Zm19 0a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/></svg>';
         markerEl.title = location.carrierName || '${MAP_TEXT.carrier}';
 
-        new mapgl.HtmlMarker(map, {
-          coordinates: [location.lon, location.lat],
-          html: markerEl,
-          anchor: [0.5, 0.5]
-        });
+        L.marker([location.lat, location.lon], {
+          icon: L.divIcon({
+            className: 'leaflet-carrier-marker',
+            html: markerEl.outerHTML,
+            iconSize: [58, 58],
+            iconAnchor: [29, 29]
+          }),
+          keyboard: false
+        }).addTo(map).bindTooltip(location.carrierName || '${MAP_TEXT.carrier}', { direction: 'top' });
       }
 
       function startCarrierLocationWatch() {
@@ -584,22 +540,30 @@ export default function MapScreen() {
           post('openLoad', { id: String(load.id) });
         });
 
-        new mapgl.HtmlMarker(map, {
-          coordinates: [load.pickup_point.lon, load.pickup_point.lat],
-          html: markerEl,
-          anchor: [0.5, 0.5]
+        L.marker([load.pickup_point.lat, load.pickup_point.lon], {
+          icon: L.divIcon({
+            className: 'leaflet-load-marker',
+            html: markerEl.outerHTML,
+            iconSize: [22, 22],
+            iconAnchor: [11, 11]
+          }),
+          keyboard: false
+        }).addTo(map).on('click', function() {
+          post('openLoad', { id: String(load.id) });
         });
       }
 
-      if (!ownerMapMode || !carrierLocation) {
-        createMarker('pin-a', '${safeFrom}', fromPoint, 'A');
-        createMarker('pin-b', '${safeTo}', toPoint, 'B');
-        routeLoads.forEach(createLoadMarker);
-      }
+      createMarker('pin-a', '${safeFrom}', fromPoint, 'A');
+      createMarker('pin-b', '${safeTo}', toPoint, 'B');
+      routeLoads.forEach(createLoadMarker);
       createCarrierMarker(carrierLocation);
       startCarrierLocationWatch();
 
-
+      if (routeLatLngs.length >= 2) {
+        map.fitBounds(routeLine.getBounds(), { padding: [52, 52], maxZoom: 14 });
+      } else {
+        map.setView([mapCenter[1], mapCenter[0]], mapZoom);
+      }
 
       post('ready', { ok: true });
     } catch (e) {
@@ -649,28 +613,6 @@ export default function MapScreen() {
       setMapError('Ошибка связи с картой');
     }
   };
-
-  const handleStartTrip = async () => {
-    try {
-      await openDgisNavigation(fromCoords, toCoords);
-    } catch (error: any) {
-      Alert.alert(
-        '2GIS навигация',
-        error?.message || 'Не удалось открыть маршрут'
-      );
-    }
-  };
-
-  useEffect(() => {
-    if (!autoStartTrip || autoStartTripRef.current) return;
-    autoStartTripRef.current = true;
-
-    const timer = setTimeout(() => {
-      void handleStartTrip();
-    }, 700);
-
-    return () => clearTimeout(timer);
-  }, [autoStartTrip, fromCoords, toCoords]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
@@ -739,17 +681,7 @@ export default function MapScreen() {
         )}
 
         {!showCarrierLocation && <View style={styles.actionsRow}>
-          <TouchableOpacity
-            style={[
-              styles.startTripButton,
-              !canOpenDgisNavigation() && styles.startTripButtonDisabled,
-            ]}
-            activeOpacity={0.85}
-            onPress={handleStartTrip}
-          >
-            <Text style={styles.startTripButtonText}>В путь</Text>
-          </TouchableOpacity>
-
+          <Text style={styles.routeOnlyText}>Маршрут построен на карте</Text>
           {!!loadId && (
             <TouchableOpacity
               style={styles.detailsButton}
@@ -952,21 +884,13 @@ function createStyles(colors: MapThemeColors) {
   actionsRow: {
     flexDirection: 'row',
     gap: 10,
-  },
-  startTripButton: {
-    flex: 1,
-    backgroundColor: '#0891B2',
-    borderRadius: 16,
-    paddingVertical: 15,
     alignItems: 'center',
   },
-  startTripButtonDisabled: {
-    backgroundColor: colors.border,
-  },
-  startTripButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '900',
+  routeOnlyText: {
+    flex: 1,
+    color: colors.success,
+    fontSize: 13,
+    fontWeight: '800',
   },
   detailsButton: {
     flex: 1,

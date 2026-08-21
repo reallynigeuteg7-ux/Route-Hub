@@ -5,6 +5,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const successModal = document.getElementById('success-modal');
     const btnOk = document.getElementById('btn-ok');
 
+    const currencySelect = document.getElementById('currency');
+    const priceInput = document.getElementById('price');
+    const priceLabel = document.getElementById('price-label');
+    const updateCurrencyUi = () => {
+        const isSol = currencySelect?.value === 'SOL';
+        if (priceLabel) priceLabel.textContent = isSol ? 'Ставка SOL' : 'Ставка ₸';
+        if (priceInput) {
+            priceInput.min = isSol ? '0.000001' : '1000';
+            priceInput.max = isSol ? '1000' : '100000000';
+            priceInput.step = isSol ? '0.000001' : '1000';
+            priceInput.placeholder = isSol ? 'Например, 0.1' : '50000';
+        }
+    };
+    currencySelect?.addEventListener('change', updateCurrencyUi);
+    updateCurrencyUi();
+
     if (cargoForm) {
         cargoForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -23,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     volume: document.getElementById('volume').value || 0,
                     type: document.getElementById('cargoType').value,
                     price: document.getElementById('price').value,
+                    currency: document.getElementById('currency')?.value || 'KZT',
                     length: document.getElementById('length')?.value || 0,
                     width: document.getElementById('width')?.value || 0,
                     height: document.getElementById('height')?.value || 0,

@@ -23,6 +23,12 @@ function formatWalletAmount(value) {
   return n.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function formatSolAmount(value) {
+  const n = Number(value || 0);
+  if (!Number.isFinite(n)) return '0.000000';
+  return n.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 9 });
+}
+
 function getWalletBalance(wallet) {
   return Number(wallet?.balance ?? wallet?.availableBalance ?? 0);
 }
@@ -34,6 +40,16 @@ function updateWalletUi(wallet) {
   if (display) display.textContent = balanceText + ' \u20b8';
   const tabBalance = document.getElementById('user-balance');
   if (tabBalance) tabBalance.textContent = balanceText;
+
+  const solText = 'Devnet SOL: ' + formatSolAmount(wallet?.devnetSolBalance || 0);
+  let solDisplay = document.getElementById('devnet-sol-balance-display');
+  if (!solDisplay && display?.parentElement) {
+    solDisplay = document.createElement('div');
+    solDisplay.id = 'devnet-sol-balance-display';
+    solDisplay.style.cssText = 'margin-top:8px;color:#38bdf8;font-size:13px;font-weight:800;';
+    display.parentElement.appendChild(solDisplay);
+  }
+  if (solDisplay) solDisplay.textContent = solText;
 
   const history = document.getElementById('balance-history');
   if (!history) return;
@@ -50,9 +66,11 @@ function updateWalletUi(wallet) {
     const createdAt = tx.createdAt ? new Date(tx.createdAt).toLocaleString('ru-RU') : '';
     const title = tx.description || tx.type || '\u041e\u043f\u0435\u0440\u0430\u0446\u0438\u044f';
     const amountClass = amount >= 0 ? 'wallet-amount-positive' : 'wallet-amount-negative';
+    const isSol = String(tx.currency || '').toUpperCase() === 'SOL';
+    const formattedAmount = isSol ? formatSolAmount(amount) + ' SOL' : formatWalletAmount(amount) + ' \u20b8';
     return '<div class="history-item">' +
       '<div><strong>' + escapeHtml(title) + '</strong><small>' + escapeHtml(createdAt) + '</small></div>' +
-      '<b class="' + amountClass + '">' + sign + formatWalletAmount(amount) + ' \u20b8</b>' +
+      '<b class="' + amountClass + '">' + sign + formattedAmount + '</b>' +
     '</div>';
   }).join('');
 }
@@ -74,13 +92,97 @@ async function loadTopupDetails() {
   const response = await fetch('/api/wallet/topup-details', { credentials: 'include' });
   const data = await response.json().catch(() => ({}));
   const details = data.details || {};
-  box.innerHTML =
-    '<div><span>\u041f\u043e\u043b\u0443\u0447\u0430\u0442\u0435\u043b\u044c</span><strong>' + escapeHtml(details.title || 'RouteHub Logistics') + '</strong></div>' +
-    '<div><span>\u0411\u0430\u043d\u043a / \u0441\u043f\u043e\u0441\u043e\u0431</span><strong>' + escapeHtml(details.bank || 'Kaspi / \u0431\u0430\u043d\u043a\u043e\u0432\u0441\u043a\u0438\u0439 \u043f\u0435\u0440\u0435\u0432\u043e\u0434') + '</strong></div>' +
-    '<div><span>\u0420\u0435\u043a\u0432\u0438\u0437\u0438\u0442\u044b</span><strong>' + escapeHtml(details.account || '\u0423\u043a\u0430\u0436\u0438\u0442\u0435 \u0440\u0435\u043a\u0432\u0438\u0437\u0438\u0442\u044b RouteHub') + '</strong></div>' +
-    '<p>' + escapeHtml(details.comment || '\u0412 \u043a\u043e\u043c\u043c\u0435\u043d\u0442\u0430\u0440\u0438\u0438 \u0443\u043a\u0430\u0436\u0438\u0442\u0435 \u043a\u043e\u0434 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0438\u043b\u0438 \u0442\u0435\u043b\u0435\u0444\u043e\u043d') + '</p>';
+  const devnet = details.devnetSol || {};
+  box.innerHTML = devnet.enabled
+    ? '<div id="devnet-sol-box" style="margin-top:14px;padding:14px;border:1px solid rgba(56,189,248,.3);border-radius:14px;background:rgba(14,165,233,.08);display:grid;gap:9px;">' +
+      '<strong style="color:#38bdf8;">Пополнение Devnet SOL</strong>' +
+      '<small style="color:#8ea4c4;">Оплата проходит автоматически через Phantom.</small>' +
+      '<input id="devnet-sol-amount" type="number" min="0.000001" step="0.000001" placeholder="Например, 0.1" style="padding:10px;border-radius:10px;border:1px solid rgba(148,163,184,.3);background:rgba(15,23,42,.6);color:inherit;">' +
+      '<button id="devnet-sol-create" type="button" style="padding:10px;border:0;border-radius:10px;background:#0ea5e9;color:white;font-weight:800;cursor:pointer;">Оплатить через Phantom</button>' +
+      '<p id="devnet-sol-message" style="margin:0;color:#bae6fd;font-size:12px;overflow-wrap:anywhere;"></p>' +
+      '</div>'
+    : '<p style="margin-top:10px;color:#8ea4c4;">Пополнение SOL пока не настроено.</p>';
+
+  document.getElementById('devnet-sol-create')?.addEventListener('click', createDevnetSolTopup);
 }
 
+async function createDevnetSolTopup() {
+  const amountInput = document.getElementById('devnet-sol-amount');
+  const message = document.getElementById('devnet-sol-message');
+  const button = document.getElementById('devnet-sol-create');
+  const amount = Number(amountInput?.value || 0);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    if (message) message.textContent = 'Укажите сумму SOL';
+    return;
+  }
+  try {
+    if (button) button.disabled = true;
+    if (message) message.textContent = 'Подключаем Phantom...';
+    const provider = window.phantom?.solana || window.solana;
+    if (!provider?.isPhantom) {
+      throw new Error('Откройте сайт в браузере с установленным Phantom');
+    }
+    const connected = provider.isConnected ? provider : await provider.connect();
+    const publicKey = connected.publicKey || provider.publicKey;
+    if (!publicKey) throw new Error('Не удалось подключить кошелёк');
+    if (!window.solanaWeb3) throw new Error('Не загрузился модуль Solana. Обновите страницу');
+    const response = await fetch('/api/wallet/devnet-sol/topup', {
+      method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'Не удалось создать платёж');
+    const topup = data.topup || {};
+    const web3 = window.solanaWeb3;
+    const connection = new web3.Connection('https://api.devnet.solana.com', 'confirmed');
+    const sender = new web3.PublicKey(publicKey.toString());
+    const recipient = new web3.PublicKey(topup.recipient);
+    if (sender.equals(recipient)) {
+      throw new Error('Выбран кошелёк RouteHub (Account 1). Переключите Phantom на Account 2 — с него отправляется тестовый платёж.');
+    }
+    const reference = new web3.PublicKey(topup.reference);
+    const connectionBalance = await connection.getBalance(sender, 'confirmed');
+    const lamports = Math.round(Number(topup.amount) * web3.LAMPORTS_PER_SOL);
+    if (connectionBalance < lamports + 10000) {
+      throw new Error('На выбранном кошельке нет Devnet SOL для отправки. Пополните Account 2 через faucet.solana.com.');
+    }
+    const transaction = new web3.Transaction();
+    const transfer = web3.SystemProgram.transfer({
+      fromPubkey: sender,
+      toPubkey: recipient,
+      lamports
+    });
+    // Solana Pay reference is included as a readonly account so the webhook
+    // can correlate this on-chain payment with this user's pending top-up.
+    transfer.keys.push({ pubkey: reference, isSigner: false, isWritable: false });
+    transaction.add(transfer);
+    const latest = await connection.getLatestBlockhash('confirmed');
+    transaction.recentBlockhash = latest.blockhash;
+    transaction.feePayer = new web3.PublicKey(publicKey.toString());
+    if (message) message.textContent = 'Подтвердите перевод в Phantom...';
+    const result = await provider.signAndSendTransaction(transaction);
+    const signature = result?.signature || result;
+    if (!signature) throw new Error('Phantom не вернул подпись транзакции');
+    if (message) message.textContent = 'Транзакция отправлена. Проверяем сеть...';
+    let confirmResponse = await fetch('/api/wallet/devnet-sol/topup/' + encodeURIComponent(topup.id) + '/confirm', {
+      method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ signature })
+    });
+    if (!confirmResponse.ok) {
+      // Helius webhook may arrive a few seconds later; the payment is still
+      // valid and will be credited automatically once confirmed.
+      const confirmData = await confirmResponse.json().catch(() => ({}));
+      if (confirmResponse.status !== 409) throw new Error(confirmData.error || 'Транзакция отправлена, но проверка ещё не завершилась');
+    }
+    if (message) message.innerHTML = 'Готово: транзакция отправлена и баланс обновится автоматически. <a href="https://explorer.solana.com/tx/' + encodeURIComponent(signature) + '?cluster=devnet" target="_blank" rel="noopener" style="color:#7dd3fc;font-weight:800;">Открыть в Explorer</a>';
+    amountInput.value = '';
+    setTimeout(() => refreshWallet().catch(() => null), 2500);
+  } catch (error) {
+    if (message) message.textContent = error?.message || 'Ошибка отправки платежа';
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
 function topupStatusLabel(status) {
   if (status === 'approved') return '\u041f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u043e';
   if (status === 'rejected') return '\u041e\u0442\u043a\u043b\u043e\u043d\u0435\u043d\u043e';
@@ -118,7 +220,9 @@ function renderWithdrawRequests(requests) {
   list.innerHTML = requests.map((item) => {
     const createdAt = item.createdAt ? new Date(item.createdAt).toLocaleString('ru-RU') : '';
     const cls = item.status === 'approved' ? 'wallet-amount-positive' : item.status === 'rejected' ? 'wallet-amount-negative' : '';
-    return '<div class="history-item topup-request-item"><div><strong>-' + formatWalletAmount(item.amount) + ' \u20b8</strong><small>' + escapeHtml(createdAt) + '</small>' + (item.adminComment ? '<small>' + escapeHtml(item.adminComment) + '</small>' : '') + '</div><b class="' + cls + '">' + escapeHtml(withdrawStatusLabel(item.status)) + '</b></div>';
+    const isSol = String(item.currency || '').toUpperCase() === 'SOL';
+    const formattedAmount = isSol ? formatSolAmount(item.amount) + ' SOL' : formatWalletAmount(item.amount) + ' \u20b8';
+    return '<div class="history-item topup-request-item"><div><strong>-' + formattedAmount + '</strong><small>' + escapeHtml(createdAt) + '</small>' + (item.adminComment ? '<small>' + escapeHtml(item.adminComment) + '</small>' : '') + '</div><b class="' + cls + '">' + escapeHtml(withdrawStatusLabel(item.status)) + '</b></div>';
   }).join('');
 }
 async function submitTopupRequest(event) {
@@ -185,6 +289,46 @@ async function submitWithdrawRequest(event) {
   } catch (err) { if (message) message.textContent = err.message || '\u041e\u0448\u0438\u0431\u043a\u0430 \u043e\u0442\u043f\u0440\u0430\u0432\u043a\u0438 \u0437\u0430\u044f\u0432\u043a\u0438'; }
   finally { if (button) button.disabled = false; }
 }
+
+async function submitDevnetSolWithdrawRequest(event) {
+  event.preventDefault();
+  const amountInput = document.getElementById('devnet-sol-withdraw-amount');
+  const addressInput = document.getElementById('devnet-sol-withdraw-address');
+  const message = document.getElementById('devnet-sol-withdraw-message');
+  const button = event.currentTarget.querySelector('button[type="submit"]');
+  const amount = Number(amountInput?.value || 0);
+  const walletAddress = addressInput?.value?.trim() || '';
+  if (!Number.isFinite(amount) || amount < 0.000001 || amount > 1000) {
+    if (message) message.textContent = 'Укажите сумму от 0.000001 до 1000 SOL';
+    return;
+  }
+  if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(walletAddress)) {
+    if (message) message.textContent = 'Проверьте Solana-адрес получателя';
+    return;
+  }
+  try {
+    if (button) button.disabled = true;
+    if (message) message.textContent = 'Создаём заявку на вывод SOL...';
+    const response = await fetch('/api/wallet/devnet-sol/withdraw-request', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount, walletAddress })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'Не удалось создать заявку');
+    amountInput.value = '';
+    addressInput.value = '';
+    if (message) message.textContent = 'SOL автоматически отправлен. Транзакция подтверждается в сети.';
+    updateWalletUi(data.wallet);
+    renderWithdrawRequests(data.wallet?.withdrawRequests || []);
+  } catch (err) {
+    if (message) message.textContent = err.message || 'Ошибка создания заявки';
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
 function getReviewActionMarkup({ loadId, revieweeId, revieweeName, route, reviewGiven }) {
   if (reviewGiven) {
     return `<span style="display:inline-flex;align-items:center;justify-content:center;background:rgba(34,197,94,.14);color:#86efac;border:1px solid rgba(34,197,94,.28);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:800;">\u041e\u0442\u0437\u044b\u0432 \u043e\u0441\u0442\u0430\u0432\u043b\u0435\u043d</span>`;
@@ -1597,6 +1741,7 @@ async function loadFavorites() {
 function bindTopupForm() {
   document.getElementById('topup-form')?.addEventListener('submit', submitTopupRequest);
   document.getElementById('withdraw-form')?.addEventListener('submit', submitWithdrawRequest);
+  document.getElementById('devnet-sol-withdraw-form')?.addEventListener('submit', submitDevnetSolWithdrawRequest);
 }
 if (document.readyState === 'loading') {
   window.addEventListener('DOMContentLoaded', bindTopupForm);

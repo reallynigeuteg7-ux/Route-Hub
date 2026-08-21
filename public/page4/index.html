@@ -189,7 +189,14 @@
               </select>
             </div>
             <div>
-              <label>Ставка ₸</label>
+              <label>Валюта</label>
+              <select id="currency">
+                <option value="KZT">Тенге (₸)</option>
+                <option value="SOL">Solana (SOL)</option>
+              </select>
+            </div>
+            <div>
+              <label id="price-label">Ставка ₸</label>
               <input type="number" id="price" min="1000" max="100000000" step="1000" placeholder="50000" required />
             </div>
           </div>

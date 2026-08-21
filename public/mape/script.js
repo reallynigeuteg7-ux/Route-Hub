@@ -66,7 +66,8 @@ const el = (id) => document.getElementById(id);
 
 function safeStr(value, fallback = '') {
   const text = value === null || value === undefined ? '' : String(value).trim();
-  return text || fallback;
+  const label = String(currency || 'KZT').toUpperCase() === 'KZT' ? '₸' : String(currency).toUpperCase();
+  return num.toLocaleString('ru-RU') + ' ' + label;
 }
 
 function escapeHtml(value) {
@@ -78,7 +79,7 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-function formatMoneyKZT(value) {
+function formatMoneyKZT(value, currency = 'KZT') {
   const num = Number(value || 0);
   if (!Number.isFinite(num) || num <= 0) return 'Договорная';
   return `${num.toLocaleString('ru-RU')} ₸`;
@@ -383,7 +384,7 @@ function renderList(loads) {
           <div class="card__route">${escapeHtml(load.from_location || 'Откуда')} → ${escapeHtml(load.to_location || 'Куда')}</div>
           <div class="card__type">${escapeHtml(load.type || 'Тип не указан')}</div>
         </div>
-        <div class="card__price">${formatMoneyKZT(load.price)}</div>
+        <div class="card__price">${formatMoneyKZT(load.price, load.currency)}</div>
       </div>
       <div class="card__meta">
         <span class="pill2">Вес: ${escapeHtml(load.weight ?? '—')} т</span>
@@ -509,7 +510,7 @@ function renderSelectedLoad(load) {
   routeEmptyState.hidden = true;
   routeDetails.hidden = false;
   routeTitle.textContent = `${safeStr(load.from_location, 'Откуда')} → ${safeStr(load.to_location, 'Куда')}`;
-  setRouteMeta(`Тип: ${safeStr(load.type, '—')} • Вес: ${safeStr(load.weight ?? '—')} т • Цена: ${formatMoneyKZT(load.price)}`);
+  setRouteMeta(`Тип: ${safeStr(load.type, '—')} • Вес: ${safeStr(load.weight ?? '—')} т • Цена: ${formatMoneyKZT(load.price, load.currency)}`);
   setRouteInfo(mapReady ? 'Груз выбран. Строим маршрут на карте.' : 'Груз выбран. Карта 2ГИС пока не загрузилась.');
   setStatus('Груз выбран', 'idle');
   updateRouteButtons();

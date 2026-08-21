@@ -17,7 +17,7 @@
 <body>
 
 <aside class="sidebar">
-   <a href="index.html" class="logo-link">           
+   <a href="index.html" class="logo-link">
     <img class="logo" src="images/logo2.png" alt="logo">
     </a>
 
@@ -157,9 +157,13 @@
                 <div class="balance-amount">
                     <span id="user-balance">0.00</span> <small>&#8376;</small>
                 </div>
+                <!-- Скрыто визуально: инструкция по банковскому пополнению сохранена в комментарии.
                 <p class="balance-info">&#1044;&#1083;&#1103; &#1087;&#1086;&#1087;&#1086;&#1083;&#1085;&#1077;&#1085;&#1080;&#1103; &#1087;&#1077;&#1088;&#1077;&#1074;&#1077;&#1076;&#1080;&#1090;&#1077; &#1076;&#1077;&#1085;&#1100;&#1075;&#1080; &#1087;&#1086; &#1088;&#1077;&#1082;&#1074;&#1080;&#1079;&#1080;&#1090;&#1072;&#1084; RouteHub &#1080; &#1086;&#1090;&#1087;&#1088;&#1072;&#1074;&#1100;&#1090;&#1077; &#1082;&#1074;&#1080;&#1090;&#1072;&#1085;&#1094;&#1080;&#1102; &#1085;&#1072; &#1087;&#1088;&#1086;&#1074;&#1077;&#1088;&#1082;&#1091;.</p>
+                -->
+                <p class="balance-info">Операции с банковскими реквизитами временно скрыты.</p>
             </div>
 
+            <!-- Скрыто визуально по запросу: пополнение баланса через банковские реквизиты. Разметка и обработчики сохранены для будущей автоматизации.
             <div class="balance-card topup-card">
                 <h3>&#1055;&#1086;&#1087;&#1086;&#1083;&#1085;&#1080;&#1090;&#1100; &#1073;&#1072;&#1083;&#1072;&#1085;&#1089;</h3>
                 <div id="topup-details" class="topup-details">&#1047;&#1072;&#1075;&#1088;&#1091;&#1078;&#1072;&#1077;&#1084; &#1088;&#1077;&#1082;&#1074;&#1080;&#1079;&#1080;&#1090;&#1099;...</div>
@@ -179,6 +183,9 @@
                 </form>
             </div>
 
+            -->
+
+            <!-- Скрыто визуально по запросу: вывод средств через банковские реквизиты. Разметка и обработчики сохранены для будущей автоматизации.
             <div class="balance-card withdraw-card">
                 <h3>&#1042;&#1099;&#1074;&#1077;&#1089;&#1090;&#1080; &#1089;&#1088;&#1077;&#1076;&#1089;&#1090;&#1074;&#1072;</h3>
                 <form id="withdraw-form" class="topup-form">
@@ -197,18 +204,42 @@
                 </form>
             </div>
 
+            -->
+
+            <div class="balance-card crypto-withdraw-card" style="margin-top:18px;">
+                <h3>Вывести Devnet SOL</h3>
+                <p class="balance-info">Укажите адрес Solana и сумму. После проверки баланса SOL будут отправлены автоматически.</p>
+                <form id="devnet-sol-withdraw-form" class="topup-form">
+                    <label>
+                        Сумма вывода SOL
+                        <input id="devnet-sol-withdraw-amount" type="number" min="0.000001" max="1000" step="0.000001" placeholder="Например, 0.1" required>
+                    </label>
+                    <label>
+                        Solana-адрес получателя
+                        <input id="devnet-sol-withdraw-address" type="text" minlength="32" maxlength="44" placeholder="Адрес кошелька Solana" autocomplete="off" required>
+                    </label>
+                    <button class="btn-withdraw" type="submit">
+                        <i class="fas fa-coins"></i> Вывести SOL автоматически
+                    </button>
+                    <p id="devnet-sol-withdraw-message" class="topup-message"></p>
+                </form>
+            </div>
+
             <div class="history-section">
                 <h4>&#1047;&#1072;&#1103;&#1074;&#1082;&#1080; &#1085;&#1072; &#1074;&#1099;&#1074;&#1086;&#1076;</h4>
                 <div id="withdraw-requests" class="history-list">
                     <p class="empty-text">&#1047;&#1072;&#1103;&#1074;&#1086;&#1082; &#1085;&#1072; &#1074;&#1099;&#1074;&#1086;&#1076; &#1087;&#1086;&#1082;&#1072; &#1085;&#1077;&#1090;</p>
                 </div>
             </div>
+            <!-- Скрыто визуально по запросу: история пополнений. Разметка сохранена.
             <div class="history-section">
                 <h4>&#1047;&#1072;&#1103;&#1074;&#1082;&#1080; &#1085;&#1072; &#1087;&#1086;&#1087;&#1086;&#1083;&#1085;&#1077;&#1085;&#1080;&#1077;</h4>
                 <div id="topup-requests" class="history-list">
                     <p class="empty-text">&#1047;&#1072;&#1103;&#1074;&#1086;&#1082; &#1087;&#1086;&#1082;&#1072; &#1085;&#1077;&#1090;</p>
                 </div>
             </div>
+
+            -->
 
             <div class="history-section">
                 <h4>&#1048;&#1089;&#1090;&#1086;&#1088;&#1080;&#1103; &#1086;&#1087;&#1077;&#1088;&#1072;&#1094;&#1080;&#1081;</h4>
@@ -242,7 +273,7 @@
 </div>
 <script src="/socket.io/socket.io.js"></script>
 <script src="chat-template.js?v=20260506-3"></script>
-<script src="profilescript.js?v=20260506-7"></script>
+<script src="profilescript.js?v=20260819-3"></script>
 
 </body>
 </html>

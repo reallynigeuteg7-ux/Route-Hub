@@ -54,6 +54,7 @@ export default function SendOfferScreen() {
   const editOfferId = String(params.editOfferId || '');
   const editMode = Boolean(editOfferId);
 
+  const [currency, setCurrency] = useState(String(params.currency || 'KZT') === 'SOL' ? 'SOL' : 'KZT');
   const [price, setPrice] = useState(String(params.price || ''));
   const [pickupDate, setPickupDate] = useState(String(params.pickupDate || ''));
   const [truckType, setTruckType] = useState(String(params.truckType || ''));
@@ -99,7 +100,7 @@ export default function SendOfferScreen() {
         body: JSON.stringify({
           loadId: Number(loadId),
           price: Number(price),
-          currency: 'KZT',
+          currency,
           pickupDate: pickupDate.trim(),
           truckType: truckType.trim(),
           comment: comment.trim(),
@@ -148,11 +149,32 @@ export default function SendOfferScreen() {
 
             <View style={styles.formCard}>
               <View style={styles.inputWrap}>
-                <Text style={styles.label}>{T.priceLabel}</Text>
+                <Text style={styles.label}>Валюта ставки</Text>
+                <View style={styles.currencyRow}>
+                  {(['KZT', 'SOL'] as const).map((item) => (
+                    <TouchableOpacity
+                      key={item}
+                      style={[styles.currencyButton, currency === item && styles.currencyButtonActive]}
+                      activeOpacity={0.85}
+                      onPress={() => {
+                        setCurrency(item);
+                        setPrice('');
+                      }}
+                    >
+                      <Text style={[styles.currencyButtonText, currency === item && styles.currencyButtonTextActive]}>
+                        {item === 'KZT' ? 'Тенге (₸)' : 'Solana (SOL)'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.inputWrap}>
+                <Text style={styles.label}>{currency === 'SOL' ? 'Цена ставки SOL' : T.priceLabel}</Text>
                 <TextInput
                   value={price}
                   onChangeText={setPrice}
-                  placeholder={T.pricePlaceholder}
+                  placeholder={currency === 'SOL' ? 'Например 0.1' : T.pricePlaceholder}
                   placeholderTextColor={colors.mutedText}
                   style={styles.input}
                   keyboardType="numeric"
@@ -285,6 +307,31 @@ function createStyles(colors: TabThemeColors) {
     },
     inputWrap: {
       marginBottom: 14,
+    },
+    currencyRow: {
+      flexDirection: 'row',
+      gap: 10,
+    },
+    currencyButton: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 14,
+      paddingVertical: 13,
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+    },
+    currencyButtonActive: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    currencyButtonText: {
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '800',
+    },
+    currencyButtonTextActive: {
+      color: '#FFFFFF',
     },
     label: {
       color: colors.text,

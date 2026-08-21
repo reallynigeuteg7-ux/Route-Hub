@@ -237,7 +237,6 @@ export default function TabsLayout() {
         <Tabs.Screen name="create" options={{ title: 'Создать' }} />
         <Tabs.Screen name="chat" options={{ title: 'Чат' }} />
         <Tabs.Screen name="profile" options={{ title: 'Профиль' }} />
-        <Tabs.Screen name="profile-stitch" options={{ title: 'Профиль Stitch', href: null }} />
       </Tabs>
     </>
   );

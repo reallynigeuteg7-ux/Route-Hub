@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>RouteHub — трекер сделки</title>
+  <link rel="stylesheet" href="/escrow-demo.css?v=20260821-6">
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <main class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="RouteHub"><span class="brand-mark"><img src="/images/logo.png" alt="RouteHub Logistics"></span></a>
+      <div class="live-pill"><i></i><span>LIVE · BACKEND</span></div>
+      <a class="back-link" href="/">Вернуться на сайт</a>
+    </header>
+
+    <section class="hero">
+      <div>
+        <p class="eyebrow">ESCROW DEAL TRACKER</p>
+        <h1>Все этапы сделки<br><span>в одном экране</span></h1>
+        <p class="lead">Выберите груз — страница покажет ставку, заморозку средств, подтверждения сторон и итоговую выплату. Данные приходят напрямую из backend RouteHub.</p>
+      </div>
+      <div class="hero-orbit" aria-hidden="true">
+        <div class="orbit orbit-a"></div><div class="orbit orbit-b"></div>
+        <div class="orbit-core"><img src="/images/logo2.png" alt="RouteHub"></div>
+      </div>
+    </section>
+
+    <section class="selector-card">
+      <label for="loadSelect">Отслеживаемый груз</label>
+      <div class="selector-row">
+        <div class="select-wrap">
+          <select id="loadSelect" aria-label="Выберите груз">
+            <option value="">Загрузка грузов…</option>
+          </select>
+          <span class="select-arrow">⌄</span>
+        </div>
+        <button id="refreshButton" class="refresh-button" type="button"><span>↻</span> Обновить</button>
+      </div>
+      <div class="selector-meta">
+        <span id="loadCount">—</span>
+        <span id="lastUpdated">Данные ещё не загружены</span>
+      </div>
+    </section>
+
+    <section id="statePanel" class="state-panel">
+      <div class="spinner"></div>
+      <strong>Подключаемся к backend…</strong>
+      <span>Загружаем список грузов и этапы сделок</span>
+    </section>
+
+    <section id="tracker" class="tracker" hidden>
+      <article class="deal-card panel">
+        <div class="deal-heading">
+          <div>
+            <p id="dealNumber" class="label">СДЕЛКА #—</p>
+            <h2><span id="fromLocation">—</span><b>→</b><span id="toLocation">—</span></h2>
+          </div>
+          <span id="statusBadge" class="status-badge">—</span>
+        </div>
+
+        <div class="progress-head">
+          <div><span>Прогресс сделки</span><strong id="progressText">0%</strong></div>
+          <div class="progress-track"><i id="progressBar"></i></div>
+        </div>
+
+        <div class="quick-grid">
+          <div class="metric"><span>Ставок</span><strong id="offerCount">0</strong><small id="offerHint">ожидаем предложения</small></div>
+          <div class="metric"><span>Дата подачи</span><strong id="pickupDate">—</strong><small>по выбранной ставке</small></div>
+          <div class="metric"><span>Груз</span><strong id="cargoType">—</strong><small id="cargoWeight">—</small></div>
+          <div class="metric accent"><span>Валюта</span><strong id="dealCurrency">—</strong><small>расчёт сделки</small></div>
+        </div>
+
+        <div class="parties">
+          <div><span class="party-icon">З</span><p><small>Грузовладелец</small><strong id="ownerName">—</strong></p></div>
+          <div class="party-line"><i></i><i></i><i></i></div>
+          <div><span class="party-icon carrier">П</span><p><small>Перевозчик</small><strong id="carrierName">Не выбран</strong></p></div>
+        </div>
+
+        <div class="money-grid">
+          <div><span>Сумма сделки</span><strong id="dealAmount">—</strong></div>
+          <div><span>Комиссия RouteHub</span><strong id="commissionAmount">—</strong></div>
+          <div class="payout"><span>Перевозчику</span><strong id="carrierAmount">—</strong></div>
+        </div>
+      </article>
+
+      <article class="timeline-card panel">
+        <div class="section-heading">
+          <div><p class="label">ЖИВОЙ СТАТУС</p><h3>Этапы сделки</h3></div>
+          <span class="auto-refresh">автообновление 5 сек.</span>
+        </div>
+        <div id="timeline" class="timeline"></div>
+      </article>
+
+      <article class="events-card panel">
+        <div class="section-heading">
+          <div><p class="label">АУДИТ</p><h3>События и операции</h3></div>
+          <span id="eventCount" class="count-pill">0 событий</span>
+        </div>
+        <div id="eventLog" class="event-log"></div>
+      </article>
+
+      <article class="details-card panel">
+        <div class="section-heading"><div><p class="label">ГРУЗ</p><h3>Детали перевозки</h3></div></div>
+        <dl class="details-grid">
+          <div><dt>Номер</dt><dd id="detailId">—</dd></div>
+          <div><dt>Тип загрузки</dt><dd id="loadingType">—</dd></div>
+          <div><dt>Объём</dt><dd id="cargoVolume">—</dd></div>
+          <div><dt>Габариты</dt><dd id="cargoDimensions">—</dd></div>
+          <div class="wide"><dt>Описание</dt><dd id="cargoDescription">—</dd></div>
+        </dl>
+      </article>
+    </section>
+
+    <footer>
+      <span>RouteHub Deal Tracker</span>
+      <span>Read-only · без управления сделкой</span>
+    </footer>
+  </main>
+  <script src="/escrow-demo.js?v=20260821-6" defer></script>
+</body>
+</html>

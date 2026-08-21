@@ -41,7 +41,17 @@ const toggle = document.getElementById('toggle-register');
 const msg = document.getElementById('msg');
 const emailCodeInput = document.getElementById('reg-email-code');
 const registerButton = document.getElementById('reg-submit');
+const emailCodeModal = document.getElementById('email-code-modal');
+const emailCodeForm = document.getElementById('email-code-form');
+const codeEmail = document.getElementById('code-email');
+const codeMsg = document.getElementById('code-msg');
+const codeConfirmButton = document.getElementById('code-confirm');
+const codeResendButton = document.getElementById('code-resend');
+const codeModalClose = document.getElementById('code-modal-close');
+const codeModalBackdrop = document.getElementById('code-modal-backdrop');
 let emailCodeSentTo = '';
+let pendingRegistration = null;
+let resendTimer = null;
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 20000) {
   const controller = new AbortController();
@@ -53,6 +63,106 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 20000) {
     clearTimeout(timeoutId);
   }
 }
+
+function setCodeMessage(text, success = false) {
+  codeMsg.textContent = text;
+  codeMsg.classList.toggle('is-success', success);
+}
+
+function openEmailCodeModal(email, clearCode = true) {
+  codeEmail.textContent = email;
+  emailCodeModal.hidden = false;
+  document.body.classList.add('modal-open');
+  if (clearCode) emailCodeInput.value = '';
+  setCodeMessage('');
+  window.setTimeout(() => emailCodeInput.focus(), 50);
+}
+
+function closeEmailCodeModal() {
+  emailCodeModal.hidden = true;
+  document.body.classList.remove('modal-open');
+  registerButton.focus();
+}
+
+function startResendCooldown(seconds = 30) {
+  if (resendTimer) window.clearInterval(resendTimer);
+  let remaining = seconds;
+  codeResendButton.disabled = true;
+  codeResendButton.textContent = `Отправить повторно через ${remaining} сек.`;
+
+  resendTimer = window.setInterval(() => {
+    remaining -= 1;
+    if (remaining <= 0) {
+      window.clearInterval(resendTimer);
+      resendTimer = null;
+      codeResendButton.disabled = false;
+      codeResendButton.textContent = 'Отправить код повторно';
+      return;
+    }
+    codeResendButton.textContent = `Отправить повторно через ${remaining} сек.`;
+  }, 1000);
+}
+
+async function sendRegistrationCode(registration, isResend = false) {
+  const targetButton = isResend ? codeResendButton : registerButton;
+  let sent = false;
+  targetButton.disabled = true;
+  if (isResend) setCodeMessage('Отправляем новый код...');
+  else msg.textContent = 'Отправляем код на email...';
+
+  try {
+    const codeRes = await fetchWithTimeout('/api/register/email-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: registration.email, phone: registration.phone }),
+    });
+    const codeJson = await codeRes.json().catch(() => ({}));
+
+    if (!codeRes.ok) {
+      const errorText = codeJson.error || 'Не удалось отправить код';
+      if (isResend) setCodeMessage(errorText);
+      else msg.textContent = errorText;
+      return false;
+    }
+
+    emailCodeSentTo = registration.email;
+    pendingRegistration = registration;
+    sent = true;
+    if (!isResend) openEmailCodeModal(registration.email);
+    else setCodeMessage('Новый код отправлен', true);
+    msg.textContent = '';
+    startResendCooldown();
+    return true;
+  } catch (err) {
+    const errorText = err?.name === 'AbortError'
+      ? 'Сервер не ответил. Попробуйте ещё раз.'
+      : 'Ошибка соединения с сервером';
+    if (isResend) setCodeMessage(errorText);
+    else msg.textContent = errorText;
+    return false;
+  } finally {
+    if (!isResend || !sent) {
+      targetButton.disabled = false;
+      if (isResend && !sent) targetButton.textContent = 'Отправить код повторно';
+    }
+  }
+}
+
+codeModalClose.addEventListener('click', closeEmailCodeModal);
+codeModalBackdrop.addEventListener('click', closeEmailCodeModal);
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !emailCodeModal.hidden) closeEmailCodeModal();
+});
+
+emailCodeInput.addEventListener('input', () => {
+  emailCodeInput.value = emailCodeInput.value.replace(/\D/g, '').slice(0, 6);
+  setCodeMessage('');
+});
+
+codeResendButton.addEventListener('click', async () => {
+  if (!pendingRegistration) return;
+  await sendRegistrationCode(pendingRegistration, true);
+});
 
 toggle.addEventListener('click', (e) => {
   e.preventDefault();
@@ -77,8 +187,8 @@ registerForm.addEventListener('submit', async (e) => {
   const email = document.getElementById('reg-email').value.trim().toLowerCase();
   const password = document.getElementById('reg-password').value;
   const role = document.getElementById('reg-role').value;
+  const person_type = document.getElementById('reg-person-type').value;
   const phone = normalizePhone(document.getElementById('reg-phone').value);
-  const emailCode = emailCodeInput.value.trim();
 
   if (!name || !email || !phone || !password) {
     msg.textContent = '\u0417\u0430\u043f\u043e\u043b\u043d\u0438\u0442\u0435 \u0438\u043c\u044f, email, \u0442\u0435\u043b\u0435\u0444\u043e\u043d \u0438 \u043f\u0430\u0440\u043e\u043b\u044c';
@@ -90,56 +200,60 @@ registerForm.addEventListener('submit', async (e) => {
     return;
   }
 
+  pendingRegistration = { name, email, password, role, phone, person_type };
+
+  if (emailCodeSentTo === email) {
+    openEmailCodeModal(email, false);
+    return;
+  }
+
+  await sendRegistrationCode(pendingRegistration);
+});
+
+emailCodeForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const emailCode = emailCodeInput.value.trim();
+
+  if (!pendingRegistration) {
+    closeEmailCodeModal();
+    msg.textContent = 'Заполните форму регистрации ещё раз';
+    return;
+  }
+
+  if (!/^\d{6}$/.test(emailCode)) {
+    setCodeMessage('Введите все 6 цифр кода');
+    emailCodeInput.focus();
+    return;
+  }
+
+  codeConfirmButton.disabled = true;
+  setCodeMessage('Проверяем код...');
+
   try {
-    registerButton.disabled = true;
-
-    if (emailCodeSentTo !== email || !emailCode) {
-      msg.textContent = '\u041e\u0442\u043f\u0440\u0430\u0432\u043b\u044f\u0435\u043c \u043a\u043e\u0434 \u043d\u0430 email...';
-      const codeRes = await fetchWithTimeout('/api/register/email-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, phone }),
-      });
-      const codeJson = await codeRes.json().catch(() => ({}));
-
-      if (!codeRes.ok) {
-        msg.textContent = codeJson.error || '\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u043e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u043a\u043e\u0434';
-        return;
-      }
-
-      emailCodeSentTo = email;
-      emailCodeInput.style.display = '';
-      emailCodeInput.required = true;
-      emailCodeInput.focus();
-      registerButton.textContent = '\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044c \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u044e';
-      msg.textContent = '\u041a\u043e\u0434 \u043e\u0442\u043f\u0440\u0430\u0432\u043b\u0435\u043d \u043d\u0430 email. \u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0435\u0433\u043e \u0438 \u043d\u0430\u0436\u043c\u0438\u0442\u0435 \u0435\u0449\u0435 \u0440\u0430\u0437.';
-      return;
-    }
-
-    msg.textContent = '\u0420\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u044f...';
     const res = await fetch('/api/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, role, phone, emailCode }),
+      credentials: 'include',
+      body: JSON.stringify({ ...pendingRegistration, emailCode }),
     });
-
     const json = await res.json().catch(() => ({}));
 
-    if (res.ok) {
-      const meRes = await fetch('/api/me', { credentials: 'include' });
-      const me = await meRes.json();
-      redirectByRole(me.role);
+    if (!res.ok) {
+      setCodeMessage(json.error || 'Неверный или просроченный код');
+      emailCodeInput.select();
       return;
     }
 
-    msg.textContent = json.error || '\u041e\u0448\u0438\u0431\u043a\u0430 \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u0438';
+    setCodeMessage('Email подтверждён. Открываем профиль...', true);
+    const meRes = await fetch('/api/me', { credentials: 'include' });
+    if (!meRes.ok) throw new Error('Сессия регистрации не сохранилась');
+    const me = await meRes.json();
+    redirectByRole(me.role);
   } catch (err) {
-    console.error('Register error:', err);
-    msg.textContent = err?.name === 'AbortError'
-      ? '\u0421\u0435\u0440\u0432\u0435\u0440 \u043d\u0435 \u043e\u0442\u0432\u0435\u0442\u0438\u043b. \u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0435\u0449\u0435 \u0440\u0430\u0437.'
-      : '\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u043e\u0435\u0434\u0438\u043d\u0435\u043d\u0438\u044f \u0441 \u0441\u0435\u0440\u0432\u0435\u0440\u043e\u043c';
+    console.error('Register confirm error:', err);
+    setCodeMessage('Ошибка соединения с сервером');
   } finally {
-    registerButton.disabled = false;
+    codeConfirmButton.disabled = false;
   }
 });
 

@@ -29,6 +29,7 @@ export default function OfferDetailsScreen() {
   const title = String(params.title || 'Груз');
   const route = String(params.route || 'Маршрут не указан');
   const price = String(params.price || '—');
+  const currency = String(params.currency || 'KZT');
   const status = String(params.status || 'pending');
   const loadStatus = String(params.loadStatus || '');
   const clientCompleted = String(params.clientCompleted || '') === '1';
@@ -175,6 +176,7 @@ export default function OfferDetailsScreen() {
         route,
         editOfferId: offerId,
         price,
+        currency,
         pickupDate,
         truckType,
         comment,

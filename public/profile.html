@@ -5,7 +5,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <meta charset="UTF-8">  
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>ROUTEHUB</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -18,20 +18,20 @@
 <body>
 
 <aside class="sidebar">
-    <a href="index.html" class="logo-link">   
+    <a href="index.html" class="logo-link">
         <img class="logo" src="images/logo2.png" alt="logo">
     </a>
-    
+
     <div class="nav-icon active" onclick="switchTab('personal')" title="Профиль">
         <i class="fa-solid fa-house-chimney"></i>
         <span class="nav-label">Главная</span>
     </div>
-    
+
     <div class="nav-icon" onclick="switchTab('docs')" title="Документы">
         <i class="fa-solid fa-file-shield"></i>
         <span class="nav-label">Документы</span>
     </div>
-    
+
     <div class="nav-icon" onclick="switchTab('balance')" title="Баланс">
         <i class="fa-solid fa-wallet"></i>
         <span class="nav-label">Кошелек</span>
@@ -41,7 +41,7 @@
         <i class="fa-solid fa-comment-dots"></i>
         <span class="nav-label">Сообщения</span>
     </div>
-    
+
     <div class="nav-icon nav-logout" id="logout-btn" title="Выйти">
         <i class="fa-solid fa-arrow-right-from-bracket"></i>
         <span class="nav-label">Выйти</span>
@@ -203,11 +203,11 @@
                     </div>
                 </div>
 
-                
+
             </div>
         </div>
 <div id="tab-messages" class="profile-tab" style="display: none;">
-            <div id="chat-container-slot" class="chat-slot"></div> 
+            <div id="chat-container-slot" class="chat-slot"></div>
         </div>
 
         <div id="tab-balance" class="profile-tab" style="display: none;">
@@ -216,7 +216,7 @@
                     <h1>Финансовый счет</h1>
                 </div>
             </header>
-            
+
             <div class="balance-card">
                 <h3>&#1058;&#1077;&#1082;&#1091;&#1097;&#1080;&#1081; &#1073;&#1072;&#1083;&#1072;&#1085;&#1089;</h3>
                 <div class="balance-amount">
@@ -226,8 +226,10 @@
             </div>
 
             <div class="balance-card topup-card">
-                <h3>&#1055;&#1086;&#1087;&#1086;&#1083;&#1085;&#1080;&#1090;&#1100; &#1073;&#1072;&#1083;&#1072;&#1085;&#1089;</h3>
+                <!-- Старый заголовок банковского пополнения сохранён: &#1055;&#1086;&#1087;&#1086;&#1083;&#1085;&#1080;&#1090;&#1100; &#1073;&#1072;&#1083;&#1072;&#1085;&#1089; -->
+                <h3>Пополнить баланс криптовалютой</h3>
                 <div id="topup-details" class="topup-details">&#1047;&#1072;&#1075;&#1088;&#1091;&#1078;&#1072;&#1077;&#1084; &#1088;&#1077;&#1082;&#1074;&#1080;&#1079;&#1080;&#1090;&#1099;...</div>
+                <!-- Скрыто визуально: пополнение через банковские реквизиты. HTML сохранён.
                 <form id="topup-form" class="topup-form">
                     <label>
                         &#1057;&#1091;&#1084;&#1084;&#1072; &#1087;&#1086;&#1087;&#1086;&#1083;&#1085;&#1077;&#1085;&#1080;&#1103;
@@ -242,9 +244,10 @@
                     </button>
                     <p id="topup-message" class="topup-message"></p>
                 </form>
+                -->
             </div>
 
-            <div class="balance-card withdraw-card">
+            <!-- Скрыто визуально: банковский вывод. HTML сохранён.\n            <div class="balance-card withdraw-card">
                 <h3>&#1042;&#1099;&#1074;&#1077;&#1089;&#1090;&#1080; &#1089;&#1088;&#1077;&#1076;&#1089;&#1090;&#1074;&#1072;</h3>
                 <form id="withdraw-form" class="topup-form">
                     <label>
@@ -262,18 +265,40 @@
                 </form>
             </div>
 
+            -->\n\n            <div class="balance-card crypto-withdraw-card" style="margin-top:18px;">
+                <h3>Вывести Devnet SOL</h3>
+                <p class="balance-info">Укажите адрес Solana и сумму. После проверки баланса SOL будут отправлены автоматически.</p>
+                <form id="devnet-sol-withdraw-form" class="topup-form">
+                    <label>
+                        Сумма вывода SOL
+                        <input id="devnet-sol-withdraw-amount" type="number" min="0.000001" max="1000" step="0.000001" placeholder="Например, 0.1" required>
+                    </label>
+                    <label>
+                        Solana-адрес получателя
+                        <input id="devnet-sol-withdraw-address" type="text" minlength="32" maxlength="44" placeholder="Адрес кошелька Solana" autocomplete="off" required>
+                    </label>
+                    <button class="btn-withdraw" type="submit">
+                        <i class="fas fa-coins"></i> Вывести SOL автоматически
+                    </button>
+                    <p id="devnet-sol-withdraw-message" class="topup-message"></p>
+                </form>
+            </div>
+
             <div class="history-section">
                 <h4>&#1047;&#1072;&#1103;&#1074;&#1082;&#1080; &#1085;&#1072; &#1074;&#1099;&#1074;&#1086;&#1076;</h4>
                 <div id="withdraw-requests" class="history-list">
                     <p class="empty-text">&#1047;&#1072;&#1103;&#1074;&#1086;&#1082; &#1085;&#1072; &#1074;&#1099;&#1074;&#1086;&#1076; &#1087;&#1086;&#1082;&#1072; &#1085;&#1077;&#1090;</p>
                 </div>
             </div>
+            <!-- Скрыто визуально: история банковских пополнений. HTML сохранён.
             <div class="history-section">
                 <h4>&#1047;&#1072;&#1103;&#1074;&#1082;&#1080; &#1085;&#1072; &#1087;&#1086;&#1087;&#1086;&#1083;&#1085;&#1077;&#1085;&#1080;&#1077;</h4>
                 <div id="topup-requests" class="history-list">
                     <p class="empty-text">&#1047;&#1072;&#1103;&#1074;&#1086;&#1082; &#1087;&#1086;&#1082;&#1072; &#1085;&#1077;&#1090;</p>
                 </div>
             </div>
+            -->
+
             <div class="history-section">
                 <h4>История операций</h4>
                 <div id="balance-history" class="history-list">
@@ -313,7 +338,7 @@
                 <span id="active-loads-count" class="stat-value">0</span>
             </div>
         </div>
-    
+
         <div class="card-neon side-stats-card side-stats-card--verification">
             <div class="stat-row">
                 <span class="stat-label">Код пользователя</span>
@@ -332,7 +357,8 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="chat-template.js?v=20260506-3"></script>
 <script src="profile-theme.js?v=20260528-1"></script>
-<script src="profilescript.js?v=20260506-7"></script>
+<script src="https://unpkg.com/@solana/web3.js@1.98.4/lib/index.iife.min.js"></script>
+<script src="profilescript.js?v=20260819-3"></script>
 
 </body>
 </html>

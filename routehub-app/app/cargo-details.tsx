@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../lib/api';
+import { fetchFreeDrivingRoute } from '../lib/free-route';
 import { goBackOrFallback } from '../lib/navigation';
 import { useAppTheme } from '../lib/theme';
 
@@ -25,6 +26,7 @@ type LoadDetails = {
   weight: number | string;
   type: string;
   price: number | string;
+  currency?: string;
   date: string;
   contact_info?: string;
   volume?: number | string;
@@ -54,8 +56,6 @@ type FavoriteLoad = {
 };
 
 type RoutePoint = [number, number];
-
-const MAPGL_API_KEY = '9951811e-e54b-4b36-b793-ebf47deb7d64';
 
 const CITY_COORDS: Record<string, RoutePoint> = {
   'Алматы': [76.8897, 43.2389],
@@ -272,46 +272,9 @@ export default function CargoDetailsScreen() {
         setMapError('');
         setRouteCoords(null);
 
-        const response = await fetch(`${API_BASE_URL}/api/mobile/route`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: { lon: fromCoords[0], lat: fromCoords[1] },
-            to: { lon: toCoords[0], lat: toCoords[1] },
-            loadId: String(cargo.id),
-          }),
-        });
-
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          throw new Error(data?.error || `Route preview error ${response.status}`);
-        }
-
-        const geometry = Array.isArray(data?.geometry) ? data.geometry : [];
-        const normalized = geometry
-          .map((item: any): RoutePoint | null => {
-            if (Array.isArray(item) && item.length >= 2) return [Number(item[0]), Number(item[1])];
-            if (item && typeof item.lon === 'number' && typeof item.lat === 'number') {
-              return [item.lon, item.lat];
-            }
-            if (item && typeof item.x === 'number' && typeof item.y === 'number') {
-              return [item.x, item.y];
-            }
-            return null;
-          })
-          .filter(isRoutePoint) as RoutePoint[];
-
+        const normalized = await fetchFreeDrivingRoute(fromCoords, toCoords);
         if (cancelled) return;
-
-        if (normalized.length >= 2) {
-          setRouteCoords(normalized);
-          return;
-        }
-
-        throw new Error('Route preview returned empty geometry');
+        setRouteCoords(normalized);
       } catch (routeError: any) {
         if (cancelled) return;
 
@@ -442,26 +405,26 @@ export default function CargoDetailsScreen() {
               } catch (e) {}
             }
           </script>
-          <script src="https://mapgl.2gis.com/api/js/v1"></script>
+          <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+          <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
           <script>
             try {
               const routeCoords = ${routeCoordsJson};
               const fromPoint = [${fromLng}, ${fromLat}];
               const toPoint = [${toLng}, ${toLat}];
-              const map = new mapgl.Map('map', {
-                center: [${centerLng}, ${centerLat}],
-                zoom: 10,
-                key: '${MAPGL_API_KEY}',
-                zoomControl: false,
-                trafficControl: false,
-              });
+              const map = L.map('map', { zoomControl: false, attributionControl: true });
+              L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors',
+              }).addTo(map);
 
-              new mapgl.Polyline(map, {
-                coordinates: routeCoords,
-                width: 5,
+              const routeLatLngs = routeCoords.map((point) => [Number(point[1]), Number(point[0])]);
+              const routeLine = L.polyline(routeLatLngs, {
                 color: '#2F80ED',
+                weight: 5,
                 opacity: 0.95,
-              });
+                lineJoin: 'round',
+              }).addTo(map);
 
               function createMarker(className, text, coordinates, letter) {
                 const el = document.createElement('div');
@@ -470,24 +433,21 @@ export default function CargoDetailsScreen() {
                   '<div class="pin-dot"><span class="pin-inner">' + letter + '</span></div>' +
                   '<div class="pin-label">' + text + '</div>';
 
-                new mapgl.HtmlMarker(map, {
-                  coordinates: coordinates,
-                  html: el,
-                  anchor: [0.5, 1],
-                });
+                L.marker([coordinates[1], coordinates[0]], {
+                  icon: L.divIcon({
+                    className: 'leaflet-route-pin',
+                    html: el.outerHTML,
+                    iconSize: [90, 86],
+                    iconAnchor: [45, 40],
+                  }),
+                  keyboard: false,
+                }).addTo(map);
               }
 
               createMarker('pin-a', '${fromLabel}', fromPoint, 'A');
               createMarker('pin-b', '${toLabel}', toPoint, 'B');
 
-              const lngs = routeCoords.map((point) => point[0]);
-              const lats = routeCoords.map((point) => point[1]);
-              const bounds = [
-                [Math.min.apply(null, lngs), Math.min.apply(null, lats)],
-                [Math.max.apply(null, lngs), Math.max.apply(null, lats)],
-              ];
-
-              map.fitBounds(bounds, { padding: 56, duration: 250 });
+              map.fitBounds(routeLine.getBounds(), { padding: [52, 52], maxZoom: 14 });
               post('ready', { ok: true });
             } catch (e) {
               post('error', {
@@ -757,7 +717,7 @@ export default function CargoDetailsScreen() {
               {!mapLoaded && (
                 <View style={styles.mapLoader}>
                   <ActivityIndicator size="large" color={colors.primary} />
-                  <Text style={styles.mapLoaderText}>Building 2GIS route...</Text>
+              <Text style={styles.mapLoaderText}>Строим маршрут...</Text>
                 </View>
               )}
               <WebView
@@ -936,6 +896,7 @@ export default function CargoDetailsScreen() {
                       title: cargo.type || 'Груз',
                       route: `${cargo.from_location} → ${cargo.to_location}`,
                       ownerId: String(cargo.userId || ''),
+                      currency: cargo.currency || 'KZT',
                     },
                   })
                 }
@@ -1385,8 +1346,6 @@ function createThemedStyles(colors: ThemeColors) {
     ownerIconBox: { backgroundColor: colors.surfaceStrong },
   });
 }
-
-
 
 
 

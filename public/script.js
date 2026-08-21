@@ -325,8 +325,10 @@ function addAiLoads(loads) {
     card.className = 'ai-load-card';
 
     const priceValue = Number(load.price || 0);
+    const priceCurrency = String(load.currency || 'KZT').toUpperCase();
+    const priceLabel = priceCurrency === 'KZT' ? '₸' : priceCurrency;
     const formattedPrice = Number.isFinite(priceValue)
-      ? `${priceValue.toLocaleString('ru-RU')} ₸`
+      ? priceValue.toLocaleString('ru-RU') + ' ' + priceLabel
       : 'Цена не указана';
 
     const statusText =
